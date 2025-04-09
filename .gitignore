@@ -1,4 +1,4 @@
-.vscode
-*.asm
-*.o
-*.hex
+.vscode/
+.build/
+.DS_Store
+
