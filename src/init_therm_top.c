@@ -1,5 +1,70 @@
+//////////////////////////////////////////////////////////////////////////////////
+// Author:          Zhantong Zhu
+// Acknowledgement: GitHub Copilot
+// Description:     C Code Template for RISC-V
+//////////////////////////////////////////////////////////////////////////////////
+
 #include <stdint.h>
-#include "../include/create_regfile_data.h"
+#include "init_therm_top.h"
+
+void init_therm_top(void)
+{
+    // Top config regfile 0
+    uint8_t therm_top_start = 0;
+    uint8_t therm_top_en = 1;
+    uint8_t therm_top_stop = 0;
+    uint8_t collect_en = 1;
+    uint8_t collect_mode = 0;
+    uint8_t pred_en = 0;
+    uint8_t schedule_en = 0;
+    uint8_t store_sensor_en = 1;
+    uint8_t store_pred_en = 0;
+    uint8_t store_action_en = 0;
+    uint8_t action_offset = 4;
+    uint32_t num_itr = 100;
+    uint32_t sampling_intvl = 100;
+
+    // Top config regfile 1
+    uint16_t action_base_addr = 0x0000;
+    uint16_t sensor_data_base_addr = 0x0000;
+    uint16_t pred_data_base_addr = 0x0000;
+
+    // Top config regfile 2
+    uint16_t npu_input_buf_base_addr = 0x0000;
+    uint16_t npu_output_buf_base_addr = 0x0000;
+
+    uint8_t synthetic_sensor_thermal_encodings = 0x00;
+    uint8_t synthetic_sensor_current_encodings = 0x00;
+    uint8_t synthetic_sensor_voltage_encodings = 0x00;
+
+    // Top config regfile 3
+    uint32_t synthetic_action_sequence = 0x00000000;
+
+    uint64_t top_regfile_0_data = create_top_regfile_0_data(
+        therm_top_start, therm_top_en, therm_top_stop, collect_en,
+        collect_mode, pred_en, schedule_en, store_sensor_en,
+        store_pred_en, store_action_en, action_offset, num_itr,
+        sampling_intvl);
+
+    uint64_t top_regfile_1_data = create_top_regfile_1_data(
+        action_base_addr, sensor_data_base_addr, pred_data_base_addr);
+
+    uint64_t top_regfile_2_data = create_top_regfile_2_data(
+        npu_input_buf_base_addr, npu_output_buf_base_addr,
+        synthetic_sensor_thermal_encodings,
+        synthetic_sensor_current_encodings,
+        synthetic_sensor_voltage_encodings);
+
+    uint64_t top_regfile_3_data = create_top_regfile_3_data(synthetic_action_sequence);
+
+    // Write the data to respective registers
+
+    uint64_t *top_regfile_base_addr = (uint64_t *)0x60002218; // Base address of top register file
+    *(top_regfile_base_addr + 0) = top_regfile_0_data;        // Write to regfile 0
+    *(top_regfile_base_addr + 1) = top_regfile_1_data;        // Write to regfile 1
+    *(top_regfile_base_addr + 2) = top_regfile_2_data;        // Write to regfile 2
+    *(top_regfile_base_addr + 3) = top_regfile_3_data;        // Write to regfile 3
+}
 
 // Create CSR data for Configuration Register 0
 uint64_t create_top_regfile_0_data(uint8_t therm_top_start,
@@ -75,103 +140,5 @@ uint64_t create_top_regfile_3_data(uint32_t synthetic_action_sequence)
     uint64_t data = 0;
     data |= (synthetic_action_sequence & 0xFFFFFFFFULL); // 32 bits [31:0]
     // Bits [63:32] are reserved and set to 0
-    return data;
-}
-
-// Create CSR data for RL Configuration Register 0
-uint64_t create_rl_config_regfile_0_data(
-    uint16_t coef_k1,
-    uint16_t coef_k2,
-    uint16_t coef_k3,
-    uint16_t learning_rate)
-{
-    uint64_t data = 0;
-
-    data |= (coef_k1 & 0xFFFFULL);               // 16 bits [15:0]
-    data |= ((coef_k2 & 0xFFFFULL) << 16);       // 16 bits [31:16]
-    data |= ((coef_k3 & 0xFFFFULL) << 32);       // 16 bits [47:32]
-    data |= ((learning_rate & 0xFFFFULL) << 48); // 16 bits [63:48]
-
-    return data;
-}
-
-// Create CSR data for RL Configuration Register 1
-uint64_t create_rl_config_regfile_1_data(
-    uint16_t discount_factor,
-    uint16_t initial_epsilon,
-    uint8_t num_active_actions,
-    uint8_t thres_high,
-    uint8_t thres_mid,
-    uint8_t thres_low)
-{
-    uint64_t data = 0;
-
-    data |= (discount_factor & 0xFFFFULL);          // 16 bits [15:0]
-    data |= ((initial_epsilon & 0xFFFFULL) << 16);  // 16 bits [31:16]
-    data |= ((num_active_actions & 0xFFULL) << 32); // 8 bits [39:32]
-    data |= ((thres_high & 0xFFULL) << 40);         // 8 bits [47:40]
-    data |= ((thres_mid & 0xFFULL) << 48);          // 8 bits [55:48]
-    data |= ((thres_low & 0xFFULL) << 56);          // 8 bits [63:56]
-
-    return data;
-}
-
-// Create CSR data for RL Configuration Register 2
-uint64_t create_rl_config_regfile_2_data(
-    uint16_t epsilon_decay_step,
-    uint16_t epsilon_min,
-    uint16_t epsilon_decay_factor,
-    uint8_t epsilon_decay_interval,
-    uint8_t epsilon_decay_mode)
-{
-    uint64_t data = 0;
-
-    data |= (epsilon_decay_step & 0xFFFFULL);           // 16 bits [15:0]
-    data |= ((epsilon_min & 0xFFFFULL) << 16);          // 16 bits [31:16]
-    data |= ((epsilon_decay_factor & 0xFFFFULL) << 32); // 16 bits [47:32]
-    data |= ((epsilon_decay_interval & 0xFFULL) << 48); // 8 bits [55:48]
-    data |= ((epsilon_decay_mode & 0x3ULL) << 56);      // 2 bits [57:56]
-
-    return data;
-}
-
-uint64_t create_quant_regfile_data(
-    uint16_t thermal_scale_multiplier,
-    uint8_t thermal_scale_shift,
-    uint8_t thermal_zero_point,
-    uint16_t power_scale_multiplier,
-    uint8_t power_scale_shift,
-    uint8_t power_zero_point)
-{
-    uint64_t data = 0;
-
-    // Thermal quantization parameters
-    data |= (thermal_scale_multiplier & 0xFFFFULL);  // 16 bits [15:0]
-    data |= ((thermal_scale_shift & 0x3FULL) << 16); // 6 bits [21:16]
-    data |= ((thermal_zero_point & 0xFFULL) << 22);  // 8 bits [29:22]
-
-    // Power quantization parameters
-    data |= ((power_scale_multiplier & 0xFFFFULL) << 32); // 16 bits [47:32]
-    data |= ((power_scale_shift & 0x3FULL) << 48);        // 6 bits [53:48]
-    data |= ((power_zero_point & 0xFFULL) << 54);         // 8 bits [61:54]
-
-    // Bits [63:62] are reserved and set to 0
-
-    return data;
-}
-
-uint64_t create_dequant_regfile_data(
-    uint16_t dequant_scale_fixed,
-    uint8_t dequant_scale_shift,
-    uint8_t dequant_zero_point)
-{
-    uint64_t data = 0;
-
-    data |= (dequant_scale_fixed & 0xFFFFULL);       // 16 bits [15:0]
-    data |= ((dequant_scale_shift & 0x3FULL) << 16); // 6 bits [21:16]
-    data |= ((dequant_zero_point & 0xFFULL) << 22);  // 8 bits [29:22]
-
-    // Bits [63:30] are reserved and set to 0
-
     return data;
 }
