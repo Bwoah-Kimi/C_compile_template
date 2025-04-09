@@ -1,3 +1,10 @@
+//////////////////////////////////////////////////////////////////////////////
+// Author:          Zhantong Zhu
+// Acknowledgement: GitHub Copilot
+// Created Date:    2025-04-09
+// Description:     Header file for initializing therm_top config regfiles.
+//////////////////////////////////////////////////////////////////////////////
+
 #ifndef INIT_THERM_TOP_H
 #define INIT_THERM_TOP_H
 

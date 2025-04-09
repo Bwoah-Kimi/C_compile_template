@@ -1,3 +1,10 @@
+//////////////////////////////////////////////////////////////////////////////
+// Author:          Zhantong Zhu
+// Acknowledgement: GitHub Copilot
+// Created Date:    2025-04-09
+// Description:     Header file for initializing RL scheduler config regfiles.
+//////////////////////////////////////////////////////////////////////////////
+
 #ifndef INIT_RL_SCHEDULER_H
 #define INIT_RL_SCHEDULER_H
 

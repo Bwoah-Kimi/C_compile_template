@@ -1,7 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Author:          Zhantong Zhu
 // Acknowledgement: GitHub Copilot
-// Description:     C Code Template for RISC-V
+// Created Date:    2025-04-09
+// Description:     C Code to Initialize therm_top config regfiles.
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
@@ -21,24 +22,24 @@ void init_therm_top(void)
     uint8_t store_pred_en = 0;
     uint8_t store_action_en = 0;
     uint8_t action_offset = 4;
-    uint32_t num_itr = 100;
-    uint32_t sampling_intvl = 100;
+    uint32_t num_itr = 10;
+    uint32_t sampling_intvl = 200;
 
     // Top config regfile 1
-    uint16_t action_base_addr = 0x0000;
-    uint16_t sensor_data_base_addr = 0x0000;
-    uint16_t pred_data_base_addr = 0x0000;
+    uint16_t sensor_data_base_addr = 0x0200;
+    uint16_t pred_data_base_addr = 0x2000;
+    uint16_t action_base_addr = 0x2800;
 
     // Top config regfile 2
-    uint16_t npu_input_buf_base_addr = 0x0000;
-    uint16_t npu_output_buf_base_addr = 0x0000;
+    uint16_t npu_input_buf_base_addr = 0x10;
+    uint16_t npu_output_buf_base_addr = 0x5;
 
-    uint8_t synthetic_sensor_thermal_encodings = 0x00;
-    uint8_t synthetic_sensor_current_encodings = 0x00;
-    uint8_t synthetic_sensor_voltage_encodings = 0x00;
+    uint8_t synthetic_sensor_thermal_encodings = 10;
+    uint8_t synthetic_sensor_current_encodings = 20;
+    uint8_t synthetic_sensor_voltage_encodings = 30;
 
     // Top config regfile 3
-    uint32_t synthetic_action_sequence = 0x00000000;
+    uint32_t synthetic_action_sequence = 342391;
 
     uint64_t top_regfile_0_data = create_top_regfile_0_data(
         therm_top_start, therm_top_en, therm_top_stop, collect_en,
@@ -124,9 +125,9 @@ uint64_t create_top_regfile_2_data(uint16_t npu_input_buf_base_addr,
                                    uint8_t synthetic_sensor_voltage_encodings)
 {
     uint64_t data = 0;
-    data |= (npu_input_buf_base_addr & 0xAULL);          // 10 bits [9:0]
-    data |= ((npu_output_buf_base_addr & 0xAULL) << 10); // 9 bits [19:10]
-    // Bits [29:20] are reserved and set to 0
+    data |= (npu_input_buf_base_addr & 0x3FFULL);          // 10 bits [9:0]
+    data |= ((npu_output_buf_base_addr & 0x3FFULL) << 10); // 10 bits [19:10]
+    // Bits [31:20] are reserved and set to 0
     data |= ((synthetic_sensor_thermal_encodings & 0xFFULL) << 32); // 8 bits [39:32]
     data |= ((synthetic_sensor_current_encodings & 0xFFULL) << 40); // 8 bits [47:40]
     data |= ((synthetic_sensor_voltage_encodings & 0xFFULL) << 48); // 8 bits [55:48]

@@ -1,3 +1,10 @@
+//////////////////////////////////////////////////////////////////////////////
+// Author:          Zhantong Zhu
+// Acknowledgement: GitHub Copilot
+// Created Date:    2025-04-09
+// Description:     Header file for initializing standardization unit config regfiles.
+//////////////////////////////////////////////////////////////////////////////
+
 #ifndef INIT_STANDARDIZATION_UNIT_H
 #define INIT_STANDARDIZATION_UNIT_H
 

@@ -1,7 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Author:          Zhantong Zhu
 // Acknowledgement: GitHub Copilot
-// Description:     C Code Template for RISC-V
+// Created Date:    2025-04-09
+// Description:     C Code to Initialize standardization unit config regfiles.
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
@@ -64,13 +65,13 @@ uint64_t create_quant_regfile_data(
 
     // Thermal quantization parameters
     data |= (thermal_scale_multiplier & 0xFFFFULL);  // 16 bits [15:0]
-    data |= ((thermal_scale_shift & 0x3FULL) << 16); // 6 bits [21:16]
-    data |= ((thermal_zero_point & 0xFFULL) << 22);  // 8 bits [29:22]
+    data |= ((thermal_scale_shift & 0xFFULL) << 16); // 8 bits [23:16]
+    data |= ((thermal_zero_point & 0xFFULL) << 24);  // 8 bits [31:24]
 
     // Power quantization parameters
     data |= ((power_scale_multiplier & 0xFFFFULL) << 32); // 16 bits [47:32]
-    data |= ((power_scale_shift & 0x3FULL) << 48);        // 6 bits [53:48]
-    data |= ((power_zero_point & 0xFFULL) << 54);         // 8 bits [61:54]
+    data |= ((power_scale_shift & 0xFFULL) << 48);        // 8 bits [55:48]
+    data |= ((power_zero_point & 0xFFULL) << 56);         // 8 bits [63:56]
 
     // Bits [63:62] are reserved and set to 0
 
@@ -85,8 +86,8 @@ uint64_t create_dequant_regfile_data(
     uint64_t data = 0;
 
     data |= (dequant_scale_fixed & 0xFFFFULL);       // 16 bits [15:0]
-    data |= ((dequant_scale_shift & 0x3FULL) << 16); // 6 bits [21:16]
-    data |= ((dequant_zero_point & 0xFFULL) << 22);  // 8 bits [29:22]
+    data |= ((dequant_scale_shift & 0xFFULL) << 16); // 8 bits [24:16]
+    data |= ((dequant_zero_point & 0xFFULL) << 24);  // 8 bits [31:24]
 
     // Bits [63:30] are reserved and set to 0
 

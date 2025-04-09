@@ -1,7 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Author:          Zhantong Zhu
 // Acknowledgement: GitHub Copilot
-// Description:     C Code Template for RISC-V
+// Created Date:    2025-04-09
+// Description:     C Code to Initialize RL scheduler config regfiles.
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
@@ -10,25 +11,25 @@
 void init_rl_scheduler(void)
 {
     // RL config regfile 0
-    uint16_t coef_k1 = 0x0123;
-    uint16_t coef_k2 = 0x4567;
-    uint16_t coef_k3 = 0x89AB;
-    uint16_t learning_rate = 0x0080; // 0.5 in fixed-point representation
+    uint16_t coef_k1 = 0x1000;
+    uint16_t coef_k2 = 0x0800;
+    uint16_t coef_k3 = 0x0400;
+    uint16_t learning_rate = 0x0100;
 
     // RL config regfile 1
-    uint16_t discount_factor = 0x00CC; // ~0.8 in fixed-point representation
-    uint16_t initial_epsilon = 0x00FF; // ~1.0 in fixed-point representation
-    uint8_t num_active_actions = 4;
-    uint8_t thres_high = 80; // Temperature threshold in Celsius
-    uint8_t thres_mid = 60;  // Temperature threshold in Celsius
-    uint8_t thres_low = 40;  // Temperature threshold in Celsius
+    uint16_t discount_factor = 0x0200;
+    uint16_t initial_epsilon = 0x0F00;
+    uint8_t num_active_actions = 8;
+    uint8_t thres_high = 0x50;
+    uint8_t thres_mid = 0x30;
+    uint8_t thres_low = 0x10;
 
     // RL config regfile 2
-    uint16_t epsilon_decay_step = 0x000A;   // Decay step size
-    uint16_t epsilon_min = 0x0020;          // Minimum epsilon (~0.125)
-    uint16_t epsilon_decay_factor = 0x00CC; // Decay factor (~0.8)
-    uint8_t epsilon_decay_interval = 10;    // Update every 10 iterations
-    uint8_t epsilon_decay_mode = 1;         // Mode 1 (could be linear or exponential)
+    uint16_t epsilon_decay_step = 0x00CC;
+    uint16_t epsilon_min = 0x0005;
+    uint16_t epsilon_decay_factor = 0x000A;
+    uint8_t epsilon_decay_interval = 0x10;
+    uint8_t epsilon_decay_mode = 0;
 
     // Create register data
     uint64_t rl_regfile_0_data = create_rl_config_regfile_0_data(
