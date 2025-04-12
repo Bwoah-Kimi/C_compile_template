@@ -49,13 +49,12 @@
 
 int main()
 {
-	// init_uart();
-	// print_uart("Hello, World!\n");
+    // init_uart();
+    // print_uart("Hello, World!\n");
 
-	init_therm_top();
-	init_rl_scheduler();
-	init_standardization_unit();
-	init_q_table();
-
-	return 0;
+    init_therm_top();
+    init_rl_scheduler();
+    init_standardization_unit();
+    init_q_table();
+    return 0;
 }

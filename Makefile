@@ -24,7 +24,8 @@ $(OUTPUT_OBJ): $(SRC_FILES)
 	@mkdir -p $(BUILD_DIR)
 	$(RISCV_GCC) -mcmodel=medany -Wall -mexplicit-relocs -march=rv64im_zicsr -mabi=lp64 -nostdlib -static -Tlinker.ld -ggdb -Wl,--no-gc-sections $(SRC_FILES) -o $(OUTPUT_OBJ)
 	$(RISCV_OBJDUMP) -D -s $(OUTPUT_OBJ) > $(OUTPUT_ASM)
-	python3 asm2hex.py $(OUTPUT_ASM) $(OUTPUT_HEX)
+	python3 scripts/asm2hex.py $(OUTPUT_ASM) $(OUTPUT_HEX)
+	python3 scripts/post_process_hex.py
 
 single:
 	@if [ -z "$(SRC_NAME)" ]; then \
@@ -34,7 +35,7 @@ single:
 	@mkdir -p $(BUILD_DIR)
 	$(RISCV_GCC) -mcmodel=medany -Wall -mexplicit-relocs -march=rv64im_zicsr -mabi=lp64 -nostdlib -static -Tlinker.ld -ggdb -Wl,--no-gc-sections $(SRC_DIR)/$(SRC_FILE) -o $(BUILD_DIR)/$(SRC_FILE:.c=.o)
 	$(RISCV_OBJDUMP) -D -s $(BUILD_DIR)/$(SRC_FILE:.c=.o) > $(BUILD_DIR)/$(SRC_FILE:.c=.asm)
-	python3 asm2hex.py $(BUILD_DIR)/$(SRC_FILE:.c=.asm) $(BUILD_DIR)/$(SRC_FILE:.c=.hex)
+	python3 scripts/asm2hex.py $(BUILD_DIR)/$(SRC_FILE:.c=.asm) $(BUILD_DIR)/$(SRC_FILE:.c=.hex)
 
 clean:
 	rm -rf $(BUILD_DIR)

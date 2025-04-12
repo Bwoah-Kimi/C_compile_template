@@ -24,13 +24,13 @@ class RegisterConfigGenerator:
     
     def _generate_includes(self):
         return "#include <stdint.h>\n\n"
-    
+
     def init_therm_top_config(self):
         """Generate therm_top config regfile initialization"""
         # Configuration parameters
+        # THERM_TOP CONFIG REGFILE 0
         therm_top_start = 0
         therm_top_en = 1
-        # THERM_TOP CONFIG REGFILE 0
         therm_top_stop = 0
         collect_en = 1
         collect_mode = 0
@@ -52,9 +52,9 @@ class RegisterConfigGenerator:
         npu_input_buf_base_addr = 0x10
         npu_output_buf_base_addr = 0x5
 
-        synthetic_sensor_thermal_encodings = 0x10
-        synthetic_sensor_current_encodings = 0x20
-        synthetic_sensor_voltage_encodings = 0x30
+        synthetic_sensor_thermal_encodings = 10
+        synthetic_sensor_current_encodings = 20
+        synthetic_sensor_voltage_encodings = 30
 
         # THERM_TOP CONFIG REGFILE 3
         synthetic_action_sequence =  342391
@@ -93,11 +93,12 @@ class RegisterConfigGenerator:
         reg3 = (synthetic_action_sequence & 0xFFFFFF)    # 24 bits [23:0]
         # Bits [63:24] are reserved and set to 0
 
+        therm_top_base_addr = 0x60002218
         # Print the register values for debugging
-        print(f"THERM_TOP CONFIG REGFILE 0: {reg0:#018x}")
-        print(f"THERM_TOP CONFIG REGFILE 1: {reg1:#018x}")
-        print(f"THERM_TOP CONFIG REGFILE 2: {reg2:#018x}")
-        print(f"THERM_TOP CONFIG REGFILE 3: {reg3:#018x}")
+        print(f"THERM_TOP CONFIG REGFILE 0: Addr: {therm_top_base_addr + 0 * 8:#010x}, Data: {reg0:#018x}")
+        print(f"THERM_TOP CONFIG REGFILE 1: Addr: {therm_top_base_addr + 1 * 8:#010x}, Data: {reg1:#018x}")
+        print(f"THERM_TOP CONFIG REGFILE 2: Addr: {therm_top_base_addr + 2 * 8:#010x}, Data: {reg2:#018x}")
+        print(f"THERM_TOP CONFIG REGFILE 3: Addr: {therm_top_base_addr + 3 * 8:#010x}, Data: {reg3:#018x}")
 
         therm_top_code = textwrap.indent(textwrap.dedent(f"""
             // THERM_TOP CONFIG REGFILE
@@ -145,7 +146,7 @@ class RegisterConfigGenerator:
             quant_regfile_data.append(quant_data)
 
             # Print register data for debugging
-            print(f"QUANT CONFIG REGFILE {i}: {quant_data:#018x}")
+            print(f"QUANT CONFIG REGFILE {i}: Addr: {quant_base_addr + i * 8:#010x}, Data: {quant_data:#018x}")
 
         for i in range(num_sensors):
             dequant_scale.append(0x00C0 + i)
@@ -158,7 +159,7 @@ class RegisterConfigGenerator:
             dequant_regfile_data.append(dequant_data)
 
             # Print register data for debugging
-            print(f"DEQUANT CONFIG REGFILE {i}: {dequant_data:#018x}")
+            print(f"DEQUANT CONFIG REGFILE {i}: Addr: {dequant_base_addr + i * 8:#010x}, Data: {dequant_data:#018x}")
 
         # Generate CONFIG REGFILE BASE ADDR
         standardization_code = textwrap.indent(textwrap.dedent(f"""
@@ -183,30 +184,33 @@ class RegisterConfigGenerator:
         q_table_0_base_addr = 0x60000018
         q_table_1_base_addr = 0x60001018
 
-        q_table_value = []
+        q_table_0_value = []
+        q_table_1_value = []
 
         for i in range(num_states):
+            curr_q_value = 0
             for j in range (num_actions):
                 mod_value = (i + j) % 4
                 if mod_value == 0:
-                    q_table_value.append(0x0100 + 2 * i + j * 0x0020)
+                    curr_q_value |= ((0x0100 + 2 * i + j * 0x0020) & 0xFFFF) << ( j * 16)
                 elif mod_value == 1:
-                    q_table_value.append(0xFF00 - i - j * 0x0025)
+                    curr_q_value |= ((0xFF00 - i - j * 0x0025) & 0xFFFF) << ( j * 16)
                 elif mod_value == 2:
-                    q_table_value.append(0x0000)
+                    curr_q_value |= ((0x0000) & 0xFFFF) << (j * 16)
                 elif mod_value == 3:
-                    q_table_value.append(0x0080 + i + j * 0x0010)
-                
+                    curr_q_value |= ((0x0080 + i + j * 0x0010) & 0xFFFF) << (j * 16)
+            q_table_0_value.append((curr_q_value & 0xFFFFFFFFFFFFFFFF))
+            q_table_1_value.append((curr_q_value >> 64) & 0xFFFFFFFFFFFFFFFF)
         # Generate Q-Table 0
         q_table_code = textwrap.indent(textwrap.dedent(f"""
             // Q-Table 0 Initialization
             uint64_t *q_table_0_base = (uint64_t *)0x{q_table_0_base_addr:08x};
         """), "    ")
         for i in range(num_states):
-            q_table_code += f"    *(q_table_0_base + {i}) = 0x{q_table_value[i]:016x};\n"
+            q_table_code += f"    *(q_table_0_base + {i}) = 0x{q_table_0_value[i]:016x};\n"
 
             # Print register data for debugging
-            print (f"Q-Table 0 at index {i}: {q_table_value[i]:#018x}")
+            print (f"Q-Table 0 at index {i}: Addr: {q_table_0_base_addr + i * 8:#010x}, Data: {q_table_0_value[i]:#018x}")
         
         # Generate Q-Table 1
         q_table_code += textwrap.indent(textwrap.dedent(f"""
@@ -214,10 +218,10 @@ class RegisterConfigGenerator:
             uint64_t *q_table_1_base = (uint64_t *)0x{q_table_1_base_addr:08x};
         """), "    ")
         for i in range(num_states):
-            q_table_code += f"    *(q_table_1_base + {i}) = 0x{q_table_value[i]:016x};\n"
+            q_table_code += f"    *(q_table_1_base + {i}) = 0x{q_table_1_value[i]:016x};\n"
 
             # Print register data for debugging
-            print (f"Q-Table 1 at index {i}: {q_table_value[i]:#018x}")
+            print (f"Q-Table 1 at index {i}: Addr: {q_table_1_base_addr + i * 8:#010x}, Data: {q_table_1_value[i]:#018x}")
         
         self.regfile_init_code.append(q_table_code)
 
@@ -267,9 +271,10 @@ class RegisterConfigGenerator:
         reg2 |= (epsilon_decay_mode & 0x3) << 56
 
         # Print the register values for debugging
-        print(f"RL CONFIG REGFILE 0: {reg0:#018x}")
-        print(f"RL CONFIG REGFILE 1: {reg1:#018x}")
-        print(f"RL CONFIG REGFILE 2: {reg2:#018x}")
+        rl_config_base_addr = 0x60000000
+        print(f"RL CONFIG REGFILE 0: Addr: {rl_config_base_addr + 0 * 8:#010x}, Data: {reg0:#018x}")
+        print(f"RL CONFIG REGFILE 1: Addr: {rl_config_base_addr + 1 * 8:#010x}, Data: {reg1:#018x}")
+        print(f"RL CONFIG REGFILE 2: Addr: {rl_config_base_addr + 2 * 8:#010x}, Data: {reg2:#018x}")
 
         # Generate C code
         rl_scheduler_code = textwrap.indent(textwrap.dedent(f"""
@@ -281,18 +286,104 @@ class RegisterConfigGenerator:
         """), "    ")
         self.regfile_init_code.append(rl_scheduler_code)
 
+    def start_therm_top(self):
+        """Start the therm_top"""
+         # THERM_TOP CONFIG REGFILE 0
+        therm_top_start = 1
+        therm_top_en = 1
+        therm_top_stop = 0
+        collect_en = 0
+        collect_mode = 0
+        pred_en = 0
+        schedule_en = 1
+        store_sensor_en = 0
+        store_pred_en = 0
+        store_action_en = 1
+        action_offset = 4
+        num_itr = 10
+        sampling_intvl = 200
+
+        reg0 = (therm_top_start & 0x1)
+        reg0 |= (therm_top_en & 0x1) << 1
+        reg0 |= (therm_top_stop & 0x1) << 2
+        reg0 |= (collect_en & 0x1) << 3
+        reg0 |= (collect_mode & 0x1) << 4
+        reg0 |= (pred_en & 0x1) << 5
+        reg0 |= (schedule_en & 0x1) << 6
+        reg0 |= (store_sensor_en & 0x1) << 7
+        reg0 |= (store_pred_en & 0x1) << 8
+        reg0 |= (store_action_en & 0x1) << 9
+        reg0 |= (action_offset & 0x1F) << 10
+        reg0 |= (num_itr & 0x1FFFF) << 15
+        reg0 |= (sampling_intvl & 0xFFFFFFFF) << 32
+
+        start_code = textwrap.indent(textwrap.dedent(f"""
+            // Start the therm_top
+            *(therm_top_base_addr + 0) = 0x{reg0:016x};
+        """), "    ")
+        self.regfile_init_code.append(start_code)
+
+    def start_tensor_engine_wrapper(self):
+        """Start tensor engine wrapper"""
+        num_actions = 8
+        num_instr_per_action = 4
+
+        loop_op = 1
+        local_read = 1
+        l_r_op = 1
+        func = 0
+        cim_addr = 0
+        gbuffer_addr = 0
+        op_cycle = 0
+        tensor_engine_instr = []
+        tensor_engine_config = 0b1_0000_0000_0000_0100_0000_0001
+        tensor_engine_config_addr = 0x0000_0000_4200_0000
+        tensor_engine_instr_base_addr = 0x0000_0000_4100_0000
+
+        # Generate tensor engine instructions
+        for i in range(num_actions * num_instr_per_action):
+            func = i % 8
+            cim_addr = i % 512
+            curr_tensor_engine_instr = (op_cycle & 0xF)             # 4 bits [3:0]
+            curr_tensor_engine_instr |= (gbuffer_addr & 0xFFF) << 4 # 12 bits [15:4]
+            curr_tensor_engine_instr |= (cim_addr & 0x1FF) << 16    # 9 bits [24:16]
+            curr_tensor_engine_instr |= (func & 0x7) << 25          # 3 bits [27:25]
+            curr_tensor_engine_instr |= (l_r_op & 0x3) << 28        # 2 bits [29:28]
+            curr_tensor_engine_instr |= (local_read & 0x1) << 30    # 1 bit [30]
+            curr_tensor_engine_instr |= (loop_op & 0x1) << 31       # 1 bit [31]
+            curr_tensor_engine_instr |= 0x0 << 32                   # 1 bit [32]
+            tensor_engine_instr.append(curr_tensor_engine_instr)
+
+        start_code = textwrap.indent(textwrap.dedent(f"""
+            // Start tensor_engine_wrapper
+            uint64_t *tensor_engine_config_addr = (uint64_t *)0x{tensor_engine_config_addr:016x};
+            uint64_t *tensor_engine_instr_base_addr = (uint64_t *)0x{tensor_engine_instr_base_addr:016x};
+
+            // Tensor engine wrapper config
+            *(tensor_engine_config_addr) = 0x{tensor_engine_config:016x};
+        """), "    ")
+    
+        for i in range (num_actions * num_instr_per_action):
+            start_code += f"    *(tensor_engine_instr_base_addr + {i}) = 0x{tensor_engine_instr[i]:016x};\n"
+
+            # Print register data for debugging
+            print(f"TENSOR_ENGINE INSTRUCTION {i}: Addr: {tensor_engine_instr_base_addr + i * 8:#010x}, Data: {tensor_engine_instr[i]:#018x}")
+
+        print (f"TENSOR_ENGING CONFIG: Addr: {tensor_engine_config_addr:#010x}, Data: {tensor_engine_config:#018x}")
+        self.regfile_init_code.append(start_code)
+
     def _generate_main_function(self):
         """Generate main function"""
         init_code = "\n".join(self.regfile_init_code)
         main_func_code = "int main(void) {\n"
         main_func_code += textwrap.indent(init_code, "")
-        main_func_code += textwrap.indent("\nwhile (1) {\n", "    ")
-        main_func_code += textwrap.indent("}\n", "    ")
+        # main_func_code += textwrap.indent("\nwhile (1) {\n", "    ")
+        # main_func_code += textwrap.indent("}\n", "    ")
         main_func_code += "\n    return 0;\n"
         main_func_code += "}\n"
         return main_func_code
 
-    def generate_c_file(self, filename="../src/main.c"):
+    def generate_c_file(self, filename="/home/bwoah/tools/C_compile_template/src/main.c"):
         """Generate the complete C source file"""
         with open(filename, "w") as f:
             f.write(self.header)
@@ -303,10 +394,17 @@ class RegisterConfigGenerator:
 
 def main():
     generator = RegisterConfigGenerator()
+    
+    # generator.init_standardization_unit_config()
+    # generator.init_rl_scheduler_config()
+    # generator.init_q_table_config()
+
     generator.init_therm_top_config()
-    generator.init_standardization_unit_config()
-    generator.init_rl_scheduler_config()
-    generator.init_q_table_config()
+
+    # generator.start_tensor_engine_wrapper()
+
+    # generator.start_therm_top()
+
     generator.generate_c_file()
 
 if __name__ == "__main__":

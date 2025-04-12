@@ -16,10 +16,4 @@ SECTIONS
         *(.rodata.*)
     }
 
-    .bss : {
-        . = ALIGN(16);
-        *(.bss)
-        *(.bss.*)
-        *(COMMON)
-    }
 }
