@@ -22,20 +22,19 @@ def display_therm_top_config():
     store_action_en = 0
     action_offset = 4
     num_itr = 10
-    sampling_intvl = 10
+    sampling_intvl = 200
 
     # THERM_TOP CONFIG REGFILE 1
-    sensor_data_base_addr = 0x6000
-    pred_data_base_addr = 0x0000
-    action_base_addr = 0x0000
+    sensor_data_base_addr = 0xF000
+    pred_data_base_addr = 0x2000
+    action_base_addr = 0x2800
 
     # THERM_TOP CONFIG REGFILE 2
     npu_input_buf_base_addr = 0x10
     npu_output_buf_base_addr = 0x5
-
-    synthetic_sensor_thermal_encodings = 0x10
-    synthetic_sensor_current_encodings = 0x20
-    synthetic_sensor_voltage_encodings = 0x30
+    synthetic_sensor_thermal_encodings = 10
+    synthetic_sensor_current_encodings = 20
+    synthetic_sensor_voltage_encodings = 30
 
     # THERM_TOP CONFIG REGFILE 3
     synthetic_action_sequence =  342391
@@ -57,11 +56,11 @@ def display_therm_top_config():
     reg0 |= (sampling_intvl & 0xFFFFFFFF) << 32
 
     # THERM_TOP CONFIG REGFILE 1
-    reg1 = (action_base_addr & 0xFFFF)
-    reg1 |= (sensor_data_base_addr & 0xFFFF) << 16
-    reg1 |= (pred_data_base_addr & 0xFFFF) << 32
+    reg1 = (sensor_data_base_addr & 0xFFFFFFFF)         # 32 bits [31:0]
+    reg1 |= (pred_data_base_addr & 0xFFFFFFFF) << 32    # 32 bits [63:32]
 
     # THERM_TOP CONFIG REGFILE 2
+    reg2 = 0
     reg2 = (npu_input_buf_base_addr & 0x3FF)                    # 10 bits [9:0]
     reg2 |= (npu_output_buf_base_addr & 0x3FF) << 10            # 10 bits [19:10]
     # Bits [31:20] are reserved and set to 0
@@ -71,10 +70,14 @@ def display_therm_top_config():
     # Bits [63:56] are reserved and set to 0
 
     # THERM_TOP CONFIG REGFILE 3
-    reg3 = (synthetic_action_sequence & 0xFFFFFF)    # 24 bits [23:0]
+    reg3 = 0
+    reg3 |= (synthetic_action_sequence & 0xFFFFFF)      # 24 bits [23:0]
+    # Bits [31:24] are reserved and set to 0
+    reg3 |= (action_base_addr & 0xFFFFFFFF) << 32       # 32 bits [63:32]
     # Bits [63:24] are reserved and set to 0
 
     therm_top_base_addr = 0x60002218
+
     # Print the register values for debugging
     print(f"THERM_TOP CONFIG REGFILE 0: Addr: {therm_top_base_addr + 0 * 8:#010x}, Data: {reg0:#018x}")
     print(f"THERM_TOP CONFIG REGFILE 1: Addr: {therm_top_base_addr + 1 * 8:#010x}, Data: {reg1:#018x}")

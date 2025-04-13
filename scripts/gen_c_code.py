@@ -44,7 +44,7 @@ class RegisterConfigGenerator:
         sampling_intvl = 200
 
         # THERM_TOP CONFIG REGFILE 1
-        sensor_data_base_addr = 0x0200
+        sensor_data_base_addr = 0xF000
         pred_data_base_addr = 0x2000
         action_base_addr = 0x2800
 
@@ -76,11 +76,11 @@ class RegisterConfigGenerator:
         reg0 |= (sampling_intvl & 0xFFFFFFFF) << 32
 
         # THERM_TOP CONFIG REGFILE 1
-        reg1 = (action_base_addr & 0xFFFF)
-        reg1 |= (sensor_data_base_addr & 0xFFFF) << 16
-        reg1 |= (pred_data_base_addr & 0xFFFF) << 32
+        reg1 = (sensor_data_base_addr & 0xFFFFFFFF)         # 32 bits [31:0]
+        reg1 |= (pred_data_base_addr & 0xFFFFFFFF) << 32    # 32 bits [63:32]
 
         # THERM_TOP CONFIG REGFILE 2
+        reg2 = 0
         reg2 = (npu_input_buf_base_addr & 0x3FF)                    # 10 bits [9:0]
         reg2 |= (npu_output_buf_base_addr & 0x3FF) << 10            # 10 bits [19:10]
         # Bits [31:20] are reserved and set to 0
@@ -90,8 +90,10 @@ class RegisterConfigGenerator:
         # Bits [63:56] are reserved and set to 0
 
         # THERM_TOP CONFIG REGFILE 3
-        reg3 = (synthetic_action_sequence & 0xFFFFFF)    # 24 bits [23:0]
-        # Bits [63:24] are reserved and set to 0
+        reg3 = 0
+        reg3 |= (synthetic_action_sequence & 0xFFFFFF)      # 24 bits [23:0]
+        # Bits [31:24] are reserved and set to 0
+        reg3 |= (action_base_addr & 0xFFFFFFFF) << 32       # 32 bits [63:32]
 
         therm_top_base_addr = 0x60002218
         # Print the register values for debugging
@@ -292,13 +294,13 @@ class RegisterConfigGenerator:
         therm_top_start = 1
         therm_top_en = 1
         therm_top_stop = 0
-        collect_en = 0
+        collect_en = 1
         collect_mode = 0
         pred_en = 0
-        schedule_en = 1
-        store_sensor_en = 0
+        schedule_en = 0
+        store_sensor_en = 1
         store_pred_en = 0
-        store_action_en = 1
+        store_action_en = 0
         action_offset = 4
         num_itr = 10
         sampling_intvl = 200
@@ -403,7 +405,7 @@ def main():
 
     # generator.start_tensor_engine_wrapper()
 
-    # generator.start_therm_top()
+    generator.start_therm_top()
 
     generator.generate_c_file()
 
