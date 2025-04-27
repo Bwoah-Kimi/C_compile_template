@@ -7,6 +7,7 @@
 #################################################################################
 
 import textwrap
+import random
 
 class RegisterConfigGenerator:
     def __init__(self):
@@ -23,7 +24,7 @@ class RegisterConfigGenerator:
         """)
     
     def _generate_includes(self):
-        return "#include <stdint.h>\n\n"
+        return "#include <stdint.h>\n#include \"init_config.h\"\n\n"
 
     def init_therm_top_config(self):
         """Generate therm_top config regfile initialization"""
@@ -35,13 +36,12 @@ class RegisterConfigGenerator:
         collect_en = 1
         collect_mode = 0
         pred_en = 0
+        pred_mode = 1
         schedule_en = 0
-        store_sensor_en = 1
-        store_pred_en = 0
-        store_action_en = 0
-        action_offset = 4
-        num_itr = 10
-        sampling_intvl = 200
+        store_sensor_mode = 0  # 2 bits [9:8]
+        action_offset = 4      # 5 bits [14:10]
+        num_itr = 10           # 17 bits [31:15]
+        sampling_intvl = 200   # 32 bits [63:32]
 
         # THERM_TOP CONFIG REGFILE 1
         sensor_data_base_addr = 0xF000
@@ -57,7 +57,9 @@ class RegisterConfigGenerator:
         synthetic_sensor_voltage_encodings = 30
 
         # THERM_TOP CONFIG REGFILE 3
-        synthetic_action_sequence =  342391
+        synthetic_action_sequence = 342391
+        store_pred_mode = 0     # 2 bits [25:24]
+        store_action_mode = 0   # 2 bits [27:26]
 
         # Calculate register values
         # THERM_TOP CONFIG REGFILE 0
@@ -67,10 +69,9 @@ class RegisterConfigGenerator:
         reg0 |= (collect_en & 0x1) << 3
         reg0 |= (collect_mode & 0x1) << 4
         reg0 |= (pred_en & 0x1) << 5
-        reg0 |= (schedule_en & 0x1) << 6
-        reg0 |= (store_sensor_en & 0x1) << 7
-        reg0 |= (store_pred_en & 0x1) << 8
-        reg0 |= (store_action_en & 0x1) << 9
+        reg0 |= (pred_mode & 0x1) << 6
+        reg0 |= (schedule_en & 0x1) << 7
+        reg0 |= (store_sensor_mode & 0x3) << 8
         reg0 |= (action_offset & 0x1F) << 10
         reg0 |= (num_itr & 0x1FFFF) << 15
         reg0 |= (sampling_intvl & 0xFFFFFFFF) << 32
@@ -92,10 +93,13 @@ class RegisterConfigGenerator:
         # THERM_TOP CONFIG REGFILE 3
         reg3 = 0
         reg3 |= (synthetic_action_sequence & 0xFFFFFF)      # 24 bits [23:0]
-        # Bits [31:24] are reserved and set to 0
+        reg3 |= (store_pred_mode & 0x3) << 24               # 2 bits [25:24]
+        reg3 |= (store_action_mode & 0x3) << 26             # 2 bits [27:26]
+        # Bits [31:28] are reserved and set to 0
         reg3 |= (action_base_addr & 0xFFFFFFFF) << 32       # 32 bits [63:32]
 
         therm_top_base_addr = 0x60002218
+
         # Print the register values for debugging
         print(f"THERM_TOP CONFIG REGFILE 0: Addr: {therm_top_base_addr + 0 * 8:#010x}, Data: {reg0:#018x}")
         print(f"THERM_TOP CONFIG REGFILE 1: Addr: {therm_top_base_addr + 1 * 8:#010x}, Data: {reg1:#018x}")
@@ -131,14 +135,123 @@ class RegisterConfigGenerator:
         quant_regfile_data = []
         dequant_regfile_data = []
 
+        random.seed(42)
         for i in range(num_sensors):
-            thermal_scale_mult.append(0x0100 + i)
-            thermal_scale_shift.append(i)
-            thermal_zero_point.append(40 + i)
-            power_scale_mult.append(0x0200 + i)
-            power_scale_shift.append(10 + i)
-            power_zero_point.append(20 + i)
+            # 1. Thermal quantization - diverse patterns based on index
+            thermal_case = i % 7
+            if thermal_case == 0:
+                # Standard/reference values
+                thermal_scale_mult.append(0x0100)     # exactly 1.0
+                thermal_scale_shift.append(0x08)      # standard shift
+                thermal_zero_point.append(0x00)       # no offset
+            elif thermal_case == 1:
+                # Large scaling factors
+                thermal_scale_mult.append(0xF000)     # high scaling
+                thermal_scale_shift.append(0x0F)      # large shift
+                thermal_zero_point.append(0x40)       # positive offset
+            elif thermal_case == 2:
+                # Small scaling factors
+                thermal_scale_mult.append(0x0010)     # small scaling
+                thermal_scale_shift.append(0x04)      # small shift
+                thermal_zero_point.append(0xC0)       # negative offset
+            elif thermal_case == 3:
+                # Fractional scaling
+                thermal_scale_mult.append(0x0080)     # 0.5
+                thermal_scale_shift.append(0x07)      # medium shift
+                thermal_zero_point.append(0x20)       # small positive
+            elif thermal_case == 4:
+                # Random values
+                thermal_scale_mult.append(random.randint(0, 0xFFFF) | 0x0010)  # random non-zero
+                thermal_scale_shift.append(random.randint(1, 15))              # random 1-15
+                thermal_zero_point.append(random.randint(0, 0x7F))             # random positive
+            elif thermal_case == 5:
+                # Alternating bit pattern
+                thermal_scale_mult.append(0xAAAA)     # 1010...
+                thermal_scale_shift.append(0x0A)      # moderate shift
+                thermal_zero_point.append(0x55)       # 0101...
+            elif thermal_case == 6:
+                # Edge case
+                thermal_scale_mult.append(0x0001)     # minimum
+                thermal_scale_shift.append(0x01)      # minimal shift
+                thermal_zero_point.append(0x7F)       # maximum positive
 
+            # 2. Power quantization - complementary pattern (offset by 3)
+            power_case = (i + 3) % 7
+            if power_case == 0:
+                # Standard
+                power_scale_mult.append(0x0100)       # 1.0
+                power_scale_shift.append(0x08)        # standard shift
+                power_zero_point.append(0x00)         # no offset
+            elif power_case == 1:
+                # Different from thermal
+                power_scale_mult.append(0x0200)       # 2.0
+                power_scale_shift.append(0x09)        # different shift
+                power_zero_point.append(0x10)         # different offset
+            elif power_case == 2:
+                # Inverse of thermal
+                power_scale_mult.append(0x0800)       # higher value
+                power_scale_shift.append(0x0B)        # higher shift
+                power_zero_point.append(0xF0)         # negative offset
+            elif power_case == 3:
+                # Random but biased
+                power_scale_mult.append(0x0040 + (i * 16))  # increasing
+                power_scale_shift.append(0x06)        # fixed shift
+                power_zero_point.append(0xC0)         # fixed negative
+            elif power_case == 4:
+                # Random values
+                power_scale_mult.append(random.randint(0, 0xFFFF) | 0x0020)  # different random
+                power_scale_shift.append(random.randint(4, 14))              # random 4-14
+                power_zero_point.append(random.randint(0, 0xFF) - 0x60)      # biased random
+            elif power_case == 5:
+                # Alternating inverse
+                power_scale_mult.append(0x5555)       # complement of thermal
+                power_scale_shift.append(0x05)        # different shift
+                power_zero_point.append(0xAA)         # complement
+            elif power_case == 6:
+                # Edge case
+                power_scale_mult.append(0xFFFF)       # maximum
+                power_scale_shift.append(0x10)        # maximum shift
+                power_zero_point.append(0x01)         # minimum positive
+
+            # 3. Thermal prediction dequantization (offset by 5)
+            dequant_case = (i + 5) % 7
+            if dequant_case == 0:
+                # Inverse of thermal
+                dequant_scale.append(thermal_scale_mult[i])
+                dequant_shift.append(thermal_scale_shift[i])
+                dequant_zero.append(thermal_zero_point[i])
+            elif dequant_case == 1:
+                # Specific value
+                dequant_scale.append(0x00FF)          # specific value
+                dequant_shift.append(0x07)            # different shift
+                dequant_zero.append(0x01)             # small positive
+            elif dequant_case == 2:
+                # 2.0
+                dequant_scale.append(0x0200)          # 2.0
+                dequant_shift.append(0x09)            # different shift
+                dequant_zero.append(0xFF)             # max negative byte
+            elif dequant_case == 3:
+                # 1.0 standard
+                dequant_scale.append(0x0100)          # 1.0 standard
+                dequant_shift.append(0x08)            # standard shift
+                dequant_zero.append(0x00)             # no offset
+            elif dequant_case == 4:
+                # Match power
+                dequant_scale.append(power_scale_mult[i])
+                dequant_shift.append(power_scale_shift[i])
+                dequant_zero.append(power_zero_point[i])
+            elif dequant_case == 5:
+                # Fractional
+                dequant_scale.append(0x007F)          # fractional
+                dequant_shift.append(0x07)            # medium shift
+                dequant_zero.append(0x40)             # medium offset
+            elif dequant_case == 6:
+                # Fully random
+                dequant_scale.append(random.randint(0, 0xFFFF))
+                dequant_shift.append(random.randint(0, 15))
+                dequant_zero.append(random.randint(0, 255) - 128)  # Random signed
+    
+            # Pack the quantization parameters into a 64-bit register
             quant_data = (thermal_scale_mult[i] & 0xFFFF)           # 16 bits [15:0]
             quant_data |= (thermal_scale_shift[i] & 0xFF) << 16     # 8 bits [23:16]
             quant_data |= (thermal_zero_point[i] & 0xFF) << 24      # 8 bits [31:24]
@@ -150,11 +263,7 @@ class RegisterConfigGenerator:
             # Print register data for debugging
             print(f"QUANT CONFIG REGFILE {i}: Addr: {quant_base_addr + i * 8:#010x}, Data: {quant_data:#018x}")
 
-        for i in range(num_sensors):
-            dequant_scale.append(0x00C0 + i)
-            dequant_shift.append(6 + i)
-            dequant_zero.append(120 + i)
-
+            # Pack the dequantization parameters into a 32-bit register
             dequant_data = (dequant_scale[i] & 0xFFFF)              # 16 bits [15:0]
             dequant_data |= (dequant_shift[i] & 0xFF) << 16         # 8 bits [23:16]
             dequant_data |= (dequant_zero[i] & 0xFF) << 24          # 8 bits [31:24]
@@ -169,6 +278,7 @@ class RegisterConfigGenerator:
             uint64_t *quant_base = (uint64_t *)0x{quant_base_addr:08x};
             uint64_t *dequant_base = (uint64_t *)0x{dequant_base_addr:08x};\n
         """), "    ")
+
         # Generate QUANT REGFILE DATA
         for i in range(num_sensors):
             standardization_code += f"    *(quant_base + {i}) = 0x{quant_regfile_data[i]:016x};\n"
@@ -227,12 +337,155 @@ class RegisterConfigGenerator:
         
         self.regfile_init_code.append(q_table_code)
 
+    def init_sensor_collection_unit_config(self):
+        """Generate sensor collection unit configuration initialization"""
+        random.seed(42)  # For reproducibility
+
+        # Define constants (adjust as needed for your system)
+        WEIGHT_T_NUM = 6
+        WEIGHT_V_NUM = 6
+        WEIGHT_I_NUM = 10
+        NUM_SENSORS = 14
+        LOG_OUTPUT_WIDTH = 11  # 11-bit width
+
+        # Base addresses will be filled in later
+        weight_buffer_base_addr = 0x60003000  # Placeholder - will be replaced
+        sensor_freq_buffer_base_addr = 0x60004000  # Placeholder - will be replaced
+
+        # Initialize arrays for weights and frequencies
+        sensor_T_weight_values = []
+        sensor_V_weight_values = []
+        sensor_I_weight_values = []
+        freq_0_values = []
+        freq_1_values = []
+        freq_2_values = []
+
+        # Generate synthetic weight values
+        for i in range(WEIGHT_T_NUM):
+            case = i % 5
+            if case == 0:
+                sensor_T_weight_values.append(0x00000001)  # Minimum
+            elif case == 1:
+                sensor_T_weight_values.append(0xFFFFFFFF)  # Maximum
+            elif case == 2:
+                sensor_T_weight_values.append(0x55555555)  # Alternating bits
+            elif case == 3:
+                sensor_T_weight_values.append(0x80000000)  # MSB set
+            elif case == 4:
+                sensor_T_weight_values.append(random.randint(0, 0xFFFFFFFF))  # Random
+
+        for i in range(WEIGHT_V_NUM):
+            case = (i + 2) % 5
+            if case == 0:
+                sensor_V_weight_values.append(0x00000001)  # Minimum
+            elif case == 1:
+                sensor_V_weight_values.append(0xFFFFFFFF)  # Maximum
+            elif case == 2:
+                sensor_V_weight_values.append(0xAAAAAAAA)  # Alternating bits (inverse)
+            elif case == 3:
+                sensor_V_weight_values.append(0x00000080)  # Byte MSB set
+            elif case == 4:
+                sensor_V_weight_values.append(random.randint(0, 0xFFFFFFFF))  # Random
+
+        for i in range(WEIGHT_I_NUM):
+            case = (i + 4) % 5
+            if case == 0:
+                sensor_I_weight_values.append(0x00010001)  # Pattern
+            elif case == 1:
+                sensor_I_weight_values.append(0xFFFE0001)  # Edge case
+            elif case == 2:
+                sensor_I_weight_values.append(0x01010101)  # Repeating pattern
+            elif case == 3:
+                sensor_I_weight_values.append(1 << i)  # Powers of 2
+            elif case == 4:
+                sensor_I_weight_values.append(random.randint(0, 0xFFFFFFFF))  # Random
+
+        # Generate synthetic frequency values with correct bit widths
+        for i in range(NUM_SENSORS):
+            case = i % 6
+            if case == 0:  # Zero case
+                freq_0_values.append(0)
+                freq_1_values.append(0)
+                freq_2_values.append(0)
+            elif case == 1:  # Maximum values
+                freq_0_values.append((1 << (LOG_OUTPUT_WIDTH-1)) - 1)  # Max for freq_0 (10 bits)
+                freq_1_values.append((1 << LOG_OUTPUT_WIDTH) - 1)      # Max for freq_1 (11 bits)
+                freq_2_values.append((1 << LOG_OUTPUT_WIDTH) - 1)      # Max for freq_2 (11 bits)
+            elif case == 2:  # Alternating bit patterns
+                freq_0_values.append((2**(LOG_OUTPUT_WIDTH-1) - 1) & 0xAAA)  # 10-bit mask
+                freq_1_values.append((2**LOG_OUTPUT_WIDTH - 1) & 0x555)      # 11-bit mask
+                freq_2_values.append((2**LOG_OUTPUT_WIDTH - 1) & 0xAAA)      # 11-bit mask
+            elif case == 3:  # Single bit set
+                freq_0_values.append(1 << (i % (LOG_OUTPUT_WIDTH-1)))        # Ensure within 10 bits
+                freq_1_values.append(1 << (i % LOG_OUTPUT_WIDTH))            # Ensure within 11 bits
+                freq_2_values.append(1 << ((i+3) % LOG_OUTPUT_WIDTH))        # Ensure within 11 bits
+            elif case == 4:  # Scaled by sensor index
+                freq_0_values.append((i * 100) % (1 << (LOG_OUTPUT_WIDTH-1)))  # Modulo 2^10
+                freq_1_values.append((i * 200) % (1 << LOG_OUTPUT_WIDTH))       # Modulo 2^11
+                freq_2_values.append((i * 300) % (1 << LOG_OUTPUT_WIDTH))       # Modulo 2^11
+            elif case == 5:  # Random values
+                freq_0_values.append(random.randint(0, (1 << (LOG_OUTPUT_WIDTH-1)) - 1))  # Random 0-1023 (10 bits)
+                freq_1_values.append(random.randint(0, (1 << LOG_OUTPUT_WIDTH) - 1))     # Random 0-2047 (11 bits)
+                freq_2_values.append(random.randint(0, (1 << LOG_OUTPUT_WIDTH) - 1))     # Random 0-2047 (11 bits)
+
+        print("Configuring sensor collection unit constants...")
+
+        # Generate C code for initialization
+        sensor_config_code = textwrap.indent(textwrap.dedent(f"""
+            // Sensor Collection Unit Configuration
+            uint64_t *weight_buffer = (uint64_t *)0x{weight_buffer_base_addr:08x};
+            uint64_t *freq_buffer = (uint64_t *)0x{sensor_freq_buffer_base_addr:08x};
+
+            // Initialize sensor weight buffers
+            // Current (I) weights
+        """), "    ")
+
+        # Write I weights
+        for i in range(WEIGHT_I_NUM):
+            weight_value = sensor_I_weight_values[i]
+            sensor_config_code += f"    *(weight_buffer + {i}) = 0x{weight_value:08x}ULL;  // I weight {i}\n"
+            print(f"WEIGHT_I buffer {i}: Addr: {weight_buffer_base_addr + i * 8:#010x}, Data: 0x{weight_value:08x}")
+
+        sensor_config_code += "    // Voltage (V) weights\n"
+        # Write V weights
+        for i in range(WEIGHT_V_NUM):
+            idx = WEIGHT_I_NUM + i
+            weight_value = sensor_V_weight_values[i]
+            sensor_config_code += f"    *(weight_buffer + {idx}) = 0x{weight_value:08x}ULL;  // V weight {i}\n"
+            print(f"WEIGHT_V buffer {i}: Addr: {weight_buffer_base_addr + idx * 8:#010x}, Data: 0x{weight_value:08x}")
+
+        sensor_config_code += "    // Temperature (T) weights\n"
+        # Write T weights
+        for i in range(WEIGHT_T_NUM):
+            idx = WEIGHT_I_NUM + WEIGHT_V_NUM + i
+            weight_value = sensor_T_weight_values[i]
+            sensor_config_code += f"    *(weight_buffer + {idx}) = 0x{weight_value:08x}ULL;  // T weight {i}\n"
+            print(f"WEIGHT_T buffer {i}: Addr: {weight_buffer_base_addr + idx * 8:#010x}, Data: 0x{weight_value:08x}")
+
+        sensor_config_code += "\n    // Initialize sensor frequency buffers\n"
+        # Write frequency values with proper bit masks
+        for i in range(NUM_SENSORS):
+            # Ensure values are properly masked to their bit widths
+            f0 = freq_0_values[i] & 0x3FF              # 10 bits for freq_0
+            f1 = freq_1_values[i] & 0x7FF              # 11 bits for freq_1
+            f2 = freq_2_values[i] & 0x7FF              # 11 bits for freq_2
+
+            # Pack the three frequency values into one 64-bit value with proper spacing
+            freq_data = f0 | (f1 << 10) | (f2 << 21)
+
+            sensor_config_code += f"    *(freq_buffer + {i}) = 0x{freq_data:016x}ULL;  // Frequencies for sensor {i}\n"
+            print(f"FREQ buffer {i}: Addr: {sensor_freq_buffer_base_addr + i * 8:#010x}, Data: 0x{freq_data:016x}")
+
+        print("Sensor collection unit constants configured")
+        self.regfile_init_code.append(sensor_config_code)
+
     def init_rl_scheduler_config(self):
         """Generate RL scheduler configuration with proper indentation"""
         # RL config regfile 0
         coef_k1 = 0x1000
         coef_k2 = 0x0800
         coef_k3 = 0x0400
+        coef_frac_bits = 12
         learning_rate = 0x0100
 
         # RL config regfile 1
@@ -271,6 +524,7 @@ class RegisterConfigGenerator:
         reg2 |= (epsilon_decay_factor & 0xFFFF) << 32
         reg2 |= (epsilon_decay_interval & 0xFF) << 48
         reg2 |= (epsilon_decay_mode & 0x3) << 56
+        reg2 |= (coef_frac_bits & 0xF) << 57
 
         # Print the register values for debugging
         rl_config_base_addr = 0x60000000
@@ -377,15 +631,13 @@ class RegisterConfigGenerator:
     def _generate_main_function(self):
         """Generate main function"""
         init_code = "\n".join(self.regfile_init_code)
-        main_func_code = "int main(void) {\n"
+        main_func_code = "void init_config(void) {\n"
         main_func_code += textwrap.indent(init_code, "")
-        # main_func_code += textwrap.indent("\nwhile (1) {\n", "    ")
-        # main_func_code += textwrap.indent("}\n", "    ")
-        main_func_code += "\n    return 0;\n"
+        main_func_code += "\n    return;\n"
         main_func_code += "}\n"
         return main_func_code
 
-    def generate_c_file(self, filename="/home/bwoah/tools/C_compile_template/src/main.c"):
+    def generate_c_file(self, filename="/home/bwoah/tools/C_compile_template/src/init_config.c"):
         """Generate the complete C source file"""
         with open(filename, "w") as f:
             f.write(self.header)
@@ -398,14 +650,14 @@ def main():
     generator = RegisterConfigGenerator()
     
     # generator.init_standardization_unit_config()
-    # generator.init_rl_scheduler_config()
+    generator.init_rl_scheduler_config()
+    generator.init_sensor_collection_unit_config()
     # generator.init_q_table_config()
-
     generator.init_therm_top_config()
 
     # generator.start_tensor_engine_wrapper()
 
-    generator.start_therm_top()
+    # generator.start_therm_top()
 
     generator.generate_c_file()
 
