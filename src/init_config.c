@@ -63,13 +63,5 @@ void init_config(void) {
     *(freq_buffer + 12) = 0x0000000000000000ULL;  // Frequencies for sensor 12
     *(freq_buffer + 13) = 0x00000000ffffffffULL;  // Frequencies for sensor 13
 
-
-    // THERM_TOP CONFIG REGFILE
-    uint64_t *therm_top_base_addr = (uint64_t *)0x60002218;
-    *(therm_top_base_addr + 0) = 0x000000c80005104a;
-    *(therm_top_base_addr + 1) = 0x000020000000f000;
-    *(therm_top_base_addr + 2) = 0x001e140a00001410;
-    *(therm_top_base_addr + 3) = 0x0000280000053977;
-
     return;
 }

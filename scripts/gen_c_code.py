@@ -542,43 +542,6 @@ class RegisterConfigGenerator:
         """), "    ")
         self.regfile_init_code.append(rl_scheduler_code)
 
-    def start_therm_top(self):
-        """Start the therm_top"""
-         # THERM_TOP CONFIG REGFILE 0
-        therm_top_start = 1
-        therm_top_en = 1
-        therm_top_stop = 0
-        collect_en = 1
-        collect_mode = 0
-        pred_en = 0
-        schedule_en = 0
-        store_sensor_en = 1
-        store_pred_en = 0
-        store_action_en = 0
-        action_offset = 4
-        num_itr = 10
-        sampling_intvl = 200
-
-        reg0 = (therm_top_start & 0x1)
-        reg0 |= (therm_top_en & 0x1) << 1
-        reg0 |= (therm_top_stop & 0x1) << 2
-        reg0 |= (collect_en & 0x1) << 3
-        reg0 |= (collect_mode & 0x1) << 4
-        reg0 |= (pred_en & 0x1) << 5
-        reg0 |= (schedule_en & 0x1) << 6
-        reg0 |= (store_sensor_en & 0x1) << 7
-        reg0 |= (store_pred_en & 0x1) << 8
-        reg0 |= (store_action_en & 0x1) << 9
-        reg0 |= (action_offset & 0x1F) << 10
-        reg0 |= (num_itr & 0x1FFFF) << 15
-        reg0 |= (sampling_intvl & 0xFFFFFFFF) << 32
-
-        start_code = textwrap.indent(textwrap.dedent(f"""
-            // Start the therm_top
-            *(therm_top_base_addr + 0) = 0x{reg0:016x};
-        """), "    ")
-        self.regfile_init_code.append(start_code)
-
     def start_tensor_engine_wrapper(self):
         """Start tensor engine wrapper"""
         num_actions = 8
@@ -653,11 +616,9 @@ def main():
     generator.init_rl_scheduler_config()
     generator.init_sensor_collection_unit_config()
     # generator.init_q_table_config()
-    generator.init_therm_top_config()
+    # generator.init_therm_top_config()
 
     # generator.start_tensor_engine_wrapper()
-
-    # generator.start_therm_top()
 
     generator.generate_c_file()
 
