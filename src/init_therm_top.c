@@ -15,19 +15,19 @@ void init_therm_top(void)
     uint8_t therm_top_en = 1;
     uint8_t therm_top_stop = 0;
     uint8_t collect_en = 1;
-    uint8_t collect_mode = 1;
-    uint8_t pred_en = 0;
-    uint8_t pred_mode = 0;
+    uint8_t collect_mode = 0;
+    uint8_t pred_en = 1;
+    uint8_t pred_mode = 1;
     uint8_t schedule_en = 0;
-    uint8_t store_sensor_mode = 3;
+    uint8_t store_sensor_mode = 1;
     uint8_t action_offset = 4;
     uint32_t num_itr = 10;
     uint32_t sampling_intvl = 200;
 
     // Top config regfile 1
-    uint32_t sensor_data_base_addr = 0x1000;
-    uint32_t pred_data_base_addr = 0x2000;
-    uint32_t action_base_addr = 0x2800;
+    uint32_t sensor_data_base_addr = 0x5000;
+    uint32_t pred_data_base_addr = 0x6000;
+    uint32_t action_base_addr = 0x7000;
 
     // Top config regfile 2
     uint16_t npu_input_buf_base_addr = 0x10;
@@ -39,7 +39,7 @@ void init_therm_top(void)
 
     // Top config regfile 3
     uint32_t synthetic_action_sequence = 342391;
-    uint8_t store_pred_mode = 0;
+    uint8_t store_pred_mode = 3;
     uint8_t store_action_mode = 0;
 
     uint64_t top_regfile_0_data = create_top_regfile_0_data(
@@ -59,7 +59,7 @@ void init_therm_top(void)
 
     // Write the data to respective registers
 
-    uint64_t *top_regfile_base_addr = (uint64_t *)0x60002218; // Base address of top register file
+    uint64_t* top_regfile_base_addr = (uint64_t*)0x60002218; // Base address of top register file
     *(top_regfile_base_addr + 1) = top_regfile_1_data;        // Write to regfile 1
     *(top_regfile_base_addr + 2) = top_regfile_2_data;        // Write to regfile 2
     *(top_regfile_base_addr + 3) = top_regfile_3_data;        // Write to regfile 3
@@ -68,17 +68,17 @@ void init_therm_top(void)
 
 // Create CSR data for Configuration Register 0
 uint64_t create_top_regfile_0_data(uint8_t therm_top_start,
-                                   uint8_t therm_top_en,
-                                   uint8_t therm_top_stop,
-                                   uint8_t collect_en,
-                                   uint8_t collect_mode,
-                                   uint8_t pred_en,
-                                   uint8_t pred_mode,
-                                   uint8_t schedule_en,
-                                   uint8_t store_sensor_mode,
-                                   uint8_t action_offset,
-                                   uint32_t num_itr,
-                                   uint32_t sampling_intvl)
+    uint8_t therm_top_en,
+    uint8_t therm_top_stop,
+    uint8_t collect_en,
+    uint8_t collect_mode,
+    uint8_t pred_en,
+    uint8_t pred_mode,
+    uint8_t schedule_en,
+    uint8_t store_sensor_mode,
+    uint8_t action_offset,
+    uint32_t num_itr,
+    uint32_t sampling_intvl)
 {
     uint64_t data = 0;
 
@@ -109,10 +109,10 @@ uint64_t create_top_regfile_1_data(uint32_t sensor_data_base_addr, uint32_t pred
 }
 
 uint64_t create_top_regfile_2_data(uint16_t npu_input_buf_base_addr,
-                                   uint16_t npu_output_buf_base_addr,
-                                   uint16_t synthetic_sensor_thermal_encodings,
-                                   uint16_t synthetic_sensor_current_encodings,
-                                   uint16_t synthetic_sensor_voltage_encodings)
+    uint16_t npu_output_buf_base_addr,
+    uint16_t synthetic_sensor_thermal_encodings,
+    uint16_t synthetic_sensor_current_encodings,
+    uint16_t synthetic_sensor_voltage_encodings)
 {
     uint64_t data = 0;
     data |= (npu_input_buf_base_addr & 0x3FFULL);                     // 10 bits [9:0]
@@ -126,9 +126,9 @@ uint64_t create_top_regfile_2_data(uint16_t npu_input_buf_base_addr,
 }
 
 uint64_t create_top_regfile_3_data(uint32_t synthetic_action_sequence,
-                                   uint8_t store_pred_mode,
-                                   uint8_t store_action_mode,
-                                   uint32_t action_base_addr)
+    uint8_t store_pred_mode,
+    uint8_t store_action_mode,
+    uint32_t action_base_addr)
 
 {
     uint64_t data = 0;
