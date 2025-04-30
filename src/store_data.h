@@ -12,5 +12,7 @@
 
 void store_sensor_data(uint8_t itr);
 void store_pred_data(uint8_t itr);
+void store_rl_action(uint8_t itr);
 
+void verify_sram_data(volatile uint64_t* sram_data, const uint64_t* expected_data, uint64_t count, uint64_t flag_value);
 #endif // STORE_DATA_H

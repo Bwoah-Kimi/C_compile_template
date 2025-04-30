@@ -15,8 +15,8 @@ void init_q_table(void)
     const uint64_t Q_TABLE_0_BASE_ADDR = 0x60000018; // Replace with actual address
     const uint64_t Q_TABLE_1_BASE_ADDR = 0x60001018; // Replace with actual address
 
-    uint64_t *q_table_0_base = (uint64_t *)Q_TABLE_0_BASE_ADDR;
-    uint64_t *q_table_1_base = (uint64_t *)Q_TABLE_1_BASE_ADDR;
+    uint64_t* q_table_0_base = (uint64_t*)Q_TABLE_0_BASE_ADDR;
+    uint64_t* q_table_1_base = (uint64_t*)Q_TABLE_1_BASE_ADDR;
 
     for (int i = 0; i < NUM_STATES; i++)
     {

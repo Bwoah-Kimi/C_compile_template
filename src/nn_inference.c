@@ -8,12 +8,10 @@
 #include <stdint.h>
 #include "nn_inference.h"
 #include "uart.h"
+#include "address_map.h"
 
-volatile uint64_t* const START_SIGNAL_REG = (volatile uint64_t*)0x60007000;
-volatile uint64_t* const FINISH_SIGNAL_REG = (volatile uint64_t*)0x60007008;
-
-uint64_t* sensor_data_base_addr = (uint64_t*)0x60005000; // Base address of sensor data
-uint64_t* pred_data_base_addr = (uint64_t*)0x60006000;   // Base address of prediction data
+uint64_t* sensor_data_base_addr = (uint64_t*)SENSOR_ENCODINGS_BASE_ADDR;    // Base address of sensor data
+uint64_t* pred_data_base_addr = (uint64_t*)SENSOR_PRED_BASE_ADDR;           // Base address of prediction data
 
 static const uint16_t temp_scale_factor = 0xFF; // Scale factor for temperature encoding
 static const uint16_t temp_shift_width = 8;     // Shift width for temperature encoding
@@ -166,9 +164,7 @@ void run_model_inference(void)
     int32_t output_buffer[OUTPUT_DIM];
 
     // Wait for start signal
-    while (*START_SIGNAL_REG != 0x00000000A5A5A5A5) {
-        // Wait
-    };
+    while (*(volatile uint64_t*)CPU_START_FLAG_ADDR != CPU_COMPUTE_START_FLAG) {};
 
     // Read input from memory and quantize
     for (int i = 0; i < NUM_SENSORS; i++)
@@ -220,7 +216,7 @@ void run_model_inference(void)
     }
 
     // Set finish signal
-    *FINISH_SIGNAL_REG = 0x5A5A5A5A00000000;
+    *(volatile uint64_t*)CPU_FINISH_FLAG_ADDR = CPU_COMPUTE_FINISH_FLAG;
 
     return;
 }

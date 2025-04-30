@@ -5,20 +5,31 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
+
 #include "uart.h"
+// #include "load_npu.h"
 #include "init_config.h"
-#include "init_therm_top.h"
 #include "store_data.h"
 #include "nn_inference.h"
 
+
 int main(void)
 {
-    init_uart(10000000, 101000); // Initialize UART with 500MHz clock and 115200 baud rate
-    print_uart("Hello RISC-V CPU!\n"); // Print a message to UART
-    init_config();
-    init_therm_top(); // Initialize the thermal top configuration
+    init_uart(10000000, 101000);
+    print_uart("Hello RISC-V CPU!\n");
 
-    for (uint8_t i = 0; i < 10; i++)
+    init_rl_scheduler();
+    init_q_table();
+    init_sensor_weight();
+    init_standardization_unit();
+
+    // NPU_load();
+
+    init_therm_top();
+
+    print_uart("Config initialized!\n");
+    uint64_t i = 0;
+    while (1)
     {
         // Store sensor data
         store_sensor_data(i);
@@ -28,6 +39,15 @@ int main(void)
 
         // Store prediction data
         store_pred_data(i);
+        i++;
     }
+
+    // while (1) {
+    //     asm volatile(
+    //         "li t5, 0xC0DEDEAD\n"
+    //         "nop\n"
+    //         );
+    // };
+
     return 0;
 }
