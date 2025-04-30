@@ -135,121 +135,21 @@ class RegisterConfigGenerator:
         quant_regfile_data = []
         dequant_regfile_data = []
 
-        random.seed(42)
         for i in range(num_sensors):
-            # 1. Thermal quantization - diverse patterns based on index
-            thermal_case = i % 7
-            if thermal_case == 0:
-                # Standard/reference values
-                thermal_scale_mult.append(0x0100)     # exactly 1.0
-                thermal_scale_shift.append(0x08)      # standard shift
-                thermal_zero_point.append(0x00)       # no offset
-            elif thermal_case == 1:
-                # Large scaling factors
-                thermal_scale_mult.append(0xF000)     # high scaling
-                thermal_scale_shift.append(0x0F)      # large shift
-                thermal_zero_point.append(0x40)       # positive offset
-            elif thermal_case == 2:
-                # Small scaling factors
-                thermal_scale_mult.append(0x0010)     # small scaling
-                thermal_scale_shift.append(0x04)      # small shift
-                thermal_zero_point.append(0xC0)       # negative offset
-            elif thermal_case == 3:
-                # Fractional scaling
-                thermal_scale_mult.append(0x0080)     # 0.5
-                thermal_scale_shift.append(0x07)      # medium shift
-                thermal_zero_point.append(0x20)       # small positive
-            elif thermal_case == 4:
-                # Random values
-                thermal_scale_mult.append(random.randint(0, 0xFFFF) | 0x0010)  # random non-zero
-                thermal_scale_shift.append(random.randint(1, 15))              # random 1-15
-                thermal_zero_point.append(random.randint(0, 0x7F))             # random positive
-            elif thermal_case == 5:
-                # Alternating bit pattern
-                thermal_scale_mult.append(0xAAAA)     # 1010...
-                thermal_scale_shift.append(0x0A)      # moderate shift
-                thermal_zero_point.append(0x55)       # 0101...
-            elif thermal_case == 6:
-                # Edge case
-                thermal_scale_mult.append(0x0001)     # minimum
-                thermal_scale_shift.append(0x01)      # minimal shift
-                thermal_zero_point.append(0x7F)       # maximum positive
+            # Temperature quantization - linear progression
+            thermal_scale_mult.append(0x0100 + i * 0x0010)      # Start at 1.0 and increase by 0.0625
+            thermal_scale_shift.append(0x08 + (i % 3))          # Shift values: 8, 9, 10 repeating
+            thermal_zero_point.append(-64 + i * 8)              # Start at -64 and increase by 8
 
-            # 2. Power quantization - complementary pattern (offset by 3)
-            power_case = (i + 3) % 7
-            if power_case == 0:
-                # Standard
-                power_scale_mult.append(0x0100)       # 1.0
-                power_scale_shift.append(0x08)        # standard shift
-                power_zero_point.append(0x00)         # no offset
-            elif power_case == 1:
-                # Different from thermal
-                power_scale_mult.append(0x0200)       # 2.0
-                power_scale_shift.append(0x09)        # different shift
-                power_zero_point.append(0x10)         # different offset
-            elif power_case == 2:
-                # Inverse of thermal
-                power_scale_mult.append(0x0800)       # higher value
-                power_scale_shift.append(0x0B)        # higher shift
-                power_zero_point.append(0xF0)         # negative offset
-            elif power_case == 3:
-                # Random but biased
-                power_scale_mult.append(0x0040 + (i * 16))  # increasing
-                power_scale_shift.append(0x06)        # fixed shift
-                power_zero_point.append(0xC0)         # fixed negative
-            elif power_case == 4:
-                # Random values
-                power_scale_mult.append(random.randint(0, 0xFFFF) | 0x0020)  # different random
-                power_scale_shift.append(random.randint(4, 14))              # random 4-14
-                power_zero_point.append(random.randint(0, 0xFF) - 0x60)      # biased random
-            elif power_case == 5:
-                # Alternating inverse
-                power_scale_mult.append(0x5555)       # complement of thermal
-                power_scale_shift.append(0x05)        # different shift
-                power_zero_point.append(0xAA)         # complement
-            elif power_case == 6:
-                # Edge case
-                power_scale_mult.append(0xFFFF)       # maximum
-                power_scale_shift.append(0x10)        # maximum shift
-                power_zero_point.append(0x01)         # minimum positive
+            # Power quantization - different pattern
+            power_scale_mult.append(0x0020 + i * 0x0008)        # Start smaller, increase gradually
+            power_scale_shift.append(0x06 + (i % 4))            # Shift values: 6-9 repeating
+            power_zero_point.append(-32 + i * 4)                # Start at -32 and increase by 4
 
-            # 3. Thermal prediction dequantization (offset by 5)
-            dequant_case = (i + 5) % 7
-            if dequant_case == 0:
-                # Inverse of thermal
-                dequant_scale.append(thermal_scale_mult[i])
-                dequant_shift.append(thermal_scale_shift[i])
-                dequant_zero.append(thermal_zero_point[i])
-            elif dequant_case == 1:
-                # Specific value
-                dequant_scale.append(0x00FF)          # specific value
-                dequant_shift.append(0x07)            # different shift
-                dequant_zero.append(0x01)             # small positive
-            elif dequant_case == 2:
-                # 2.0
-                dequant_scale.append(0x0200)          # 2.0
-                dequant_shift.append(0x09)            # different shift
-                dequant_zero.append(0xFF)             # max negative byte
-            elif dequant_case == 3:
-                # 1.0 standard
-                dequant_scale.append(0x0100)          # 1.0 standard
-                dequant_shift.append(0x08)            # standard shift
-                dequant_zero.append(0x00)             # no offset
-            elif dequant_case == 4:
-                # Match power
-                dequant_scale.append(power_scale_mult[i])
-                dequant_shift.append(power_scale_shift[i])
-                dequant_zero.append(power_zero_point[i])
-            elif dequant_case == 5:
-                # Fractional
-                dequant_scale.append(0x007F)          # fractional
-                dequant_shift.append(0x07)            # medium shift
-                dequant_zero.append(0x40)             # medium offset
-            elif dequant_case == 6:
-                # Fully random
-                dequant_scale.append(random.randint(0, 0xFFFF))
-                dequant_shift.append(random.randint(0, 15))
-                dequant_zero.append(random.randint(0, 255) - 128)  # Random signed
+            # Dequantization - another pattern
+            dequant_scale.append(0x0080 + i * 0x0010)           # Start at 0.5, increase by 0.0625
+            dequant_shift.append(0x07 + (i % 3))                # Shifts: 7, 8, 9 repeating
+            dequant_zero.append(i * 128)                          # Simple progression by 128
     
             # Pack the quantization parameters into a 64-bit register
             quant_data = (thermal_scale_mult[i] & 0xFFFF)           # 16 bits [15:0]
@@ -263,10 +163,10 @@ class RegisterConfigGenerator:
             # Print register data for debugging
             print(f"QUANT CONFIG REGFILE {i}: Addr: {quant_base_addr + i * 8:#010x}, Data: {quant_data:#018x}")
 
-            # Pack the dequantization parameters into a 32-bit register
+            # Pack the dequantization parameters into a 64-bit register
             dequant_data = (dequant_scale[i] & 0xFFFF)              # 16 bits [15:0]
             dequant_data |= (dequant_shift[i] & 0xFF) << 16         # 8 bits [23:16]
-            dequant_data |= (dequant_zero[i] & 0xFF) << 24          # 8 bits [31:24]
+            dequant_data |= (dequant_zero[i] & 0xFFFFFFFF) << 24          # 32 bits [55:24]
             dequant_regfile_data.append(dequant_data)
 
             # Print register data for debugging
@@ -349,8 +249,8 @@ class RegisterConfigGenerator:
         LOG_OUTPUT_WIDTH = 11  # 11-bit width
 
         # Base addresses will be filled in later
-        weight_buffer_base_addr = 0x60003000  # Placeholder - will be replaced
-        sensor_freq_buffer_base_addr = 0x60004000  # Placeholder - will be replaced
+        weight_buffer_base_addr = 0x60002238  # Placeholder - will be replaced
+        sensor_freq_buffer_base_addr = 0x60002338  # Placeholder - will be replaced
 
         # Initialize arrays for weights and frequencies
         sensor_T_weight_values = []
@@ -612,10 +512,10 @@ class RegisterConfigGenerator:
 def main():
     generator = RegisterConfigGenerator()
     
-    # generator.init_standardization_unit_config()
+    generator.init_standardization_unit_config()
     generator.init_rl_scheduler_config()
     generator.init_sensor_collection_unit_config()
-    # generator.init_q_table_config()
+    generator.init_q_table_config()
     # generator.init_therm_top_config()
 
     # generator.start_tensor_engine_wrapper()

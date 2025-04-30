@@ -18,8 +18,8 @@ if not os.path.isfile(input_asm_file):
     print(f"Error: {input_asm_file} does not exist.")
     sys.exit(1)
 
-data_sections = ['.text', '.rodata']
-data = {'.text': [], '.rodata': []}
+data_sections = ['.text', '.rodata', 'srodata', 'data', 'sdata']
+data = {'.text': [], '.rodata': [], 'srodata': [], 'data': [], 'sdata': []}
 current_section = None
 
 def big_to_little_endian(hex_str):
