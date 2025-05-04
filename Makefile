@@ -25,7 +25,7 @@ $(OUTPUT_OBJ): $(SRC_FILES)
 	$(RISCV_GCC) -mcmodel=medany -Wall -mexplicit-relocs -march=rv64im_zicsr -mabi=lp64 -nostdlib -static -Tlinker.ld -ggdb -Wl,--no-gc-sections $(SRC_FILES) -o $(OUTPUT_OBJ)
 	$(RISCV_OBJDUMP) -D -s $(OUTPUT_OBJ) > $(OUTPUT_ASM)
 	python3 scripts/asm2hex.py $(OUTPUT_ASM) $(OUTPUT_HEX)
-	# python3 scripts/post_process_hex.py
+	python3 scripts/post_process_hex.py
 
 single:
 	@if [ -z "$(SRC_NAME)" ]; then \

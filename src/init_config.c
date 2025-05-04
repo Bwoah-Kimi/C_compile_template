@@ -16,14 +16,14 @@ void init_therm_top(void) {
     uint8_t therm_top_en = 1;
     uint8_t therm_top_stop = 0;
     uint8_t collect_en = 1;
-    uint8_t collect_mode = 0;
-    uint8_t pred_en = 1;
+    uint8_t collect_mode = 1;
+    uint8_t pred_en = 0;
     uint8_t pred_mode = 1;
     uint8_t schedule_en = 0;
-    uint8_t store_sensor_mode = 1;
+    uint8_t store_sensor_mode = 2;
     uint8_t action_offset = 4;
     uint32_t num_itr = 0;
-    uint32_t sampling_intvl = 200000;
+    uint32_t sampling_intvl = 200;
 
     // Top config regfile 1
     uint32_t sensor_data_base_addr = 0xA000;
@@ -108,19 +108,43 @@ void init_q_table(void) {
 }
 
 void init_sensor_weight(void) {
-    uint64_t* sensor_weight_buffer_base_addr = (uint64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
+    int64_t* sensor_weight_buffer_base_addr = (int64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
 
-    static uint64_t sensor_weight[32] = {
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0
+    static int64_t sensor_weight[22] = {
+        1120538,
+        -3316961,
+        578850,
+        -472836,
+        2391,
+        246,
+        81,
+        -951,
+        -196,
+        809,
+        0b00000000111011001010111000000110,
+        0b11111111001001001101100101101000,
+        0b11111111111000000000000111001011,
+        0b00000000000000000000010010010010,
+        0b00000000000000000010011111101100,
+        0b00000000000000000000010010111001,
+
+        0b00000110001110011001111100101101,
+        0b11100101110010001011001110111110,
+        0b00000010010011011111100011111101,
+        0b00000000000001101100110000100100,
+        0b11111111111111101110001010111101,
+        0b11111111111111111111111110111000
     };
 
     for (int i = 0; i < WEIGHT_I_NUM + WEIGHT_T_NUM + WEIGHT_V_NUM; i++) {
         // Write values to sensor weight buffer
         *(sensor_weight_buffer_base_addr + i) = sensor_weight[i];
     }
+
+    uint64_t* power_switch_base_addr = 0x40d00000;
+    *(power_switch_base_addr + 0) = 0b00100000001000000010000000100000001000000010000000100000;
+    *(power_switch_base_addr + 1) = 0b00100000001000000010000000100000001000000010000000100000;
+
     return;
 }
 
