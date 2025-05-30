@@ -96,12 +96,12 @@ def split_hex_file_for_srams(lines: List[str], output_dir: str, sram_size_bytes:
         if not entries:  # Skip empty SRAMs
             continue
             
-        output_file = os.path.join(output_dir, f"program_sram{i}.hex")
+        output_file = os.path.join(output_dir, f"main_sram{i}.hex")
         with open(output_file, 'w') as f:
             for entry in entries:
                 f.write(f"{entry}\n")
                 
-        output_files.append(f"program_sram{i}.hex")
+        output_files.append(f"main_sram{i}.hex")
         entry_counts.append(len(entries))
     
     return output_files, entry_counts
@@ -111,8 +111,8 @@ def main():
     parser = argparse.ArgumentParser(
         description='Convert 64-bit hex file to 128-bit and split for multiple SRAMs'
     )
-    parser.add_argument('--input', default='build/program.hex',
-                        help='Input hex file path (default: build/program.hex)')
+    parser.add_argument('--input', default='build/main.hex',
+                        help='Input hex file path (default: build/main.hex)')
     parser.add_argument('--output-dir', default='build',
                         help='Output directory (default: build)')
     parser.add_argument('--sram-size', type=int, default=16384,
@@ -129,7 +129,7 @@ def main():
     processed_lines = process_hex_file(args.input)
     
     # Step 2: Write processed lines to the output file
-    intermediate_file = os.path.join(args.output_dir, 'program_128b.hex')
+    intermediate_file = os.path.join(args.output_dir, 'main_128b.hex')
     os.makedirs(args.output_dir, exist_ok=True)
     
     with open(intermediate_file, 'w') as f:

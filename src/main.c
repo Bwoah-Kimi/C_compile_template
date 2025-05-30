@@ -9,8 +9,8 @@
 #include "uart.h"
 // #include "load_npu.h"
 #include "init_config.h"
-#include "store_data.h"
-#include "nn_inference.h"
+// #include "store_data.h"
+// #include "nn_inference.h"
 
 
 int main(void) {
