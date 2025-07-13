@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Author:          Zhantong Zhu
 // Acknowledgement: GitHub Copilot
-// Description:     Test code for IVT sensor testing
+// Description:     C code for IVT sensor testing
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
@@ -13,8 +13,8 @@ int main(void) {
     init_uart(10000000, 101000);
     print_uart("Starting IVT sensor test...\n");
 
+    uint32_t num_itr = 1;
     init_power_switch();
-
     init_therm_top(
         1,        // therm_top_start
         1,        // therm_top_en
@@ -26,7 +26,7 @@ int main(void) {
         0,        // schedule_en
         2,        // store_sensor_mode
         4,        // action_offset
-        1,        // num_itr
+        num_itr,  // num_itr
         10000,    // sampling_intvl
         0xA000,   // sensor_data_base_addr
         0xB000,   // pred_data_base_addr
@@ -40,6 +40,10 @@ int main(void) {
         0,        // store_pred_mode
         0         // store_action_mode
     );
+
+    for (int i = 0; i < num_itr; i++) {
+        store_sensor_data(i);
+    }
 
     print_uart("IVT sensor test finished!\n");
     return 0;
