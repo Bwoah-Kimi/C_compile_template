@@ -21,7 +21,5 @@ int main(void) {
     init_uart(10000000, 101000);
     print_uart("Hello RISC-V CPU!\n");
 
-    init_testing();
-
     return 0;
 }

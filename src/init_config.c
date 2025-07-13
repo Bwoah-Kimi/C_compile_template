@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include "const_values.h"
 #include "init_config.h"
 #include "uart.h"
 
@@ -20,7 +21,6 @@ void init_testing(void) {
 
     // init_therm_top();
 
-    print_uart("Config initialized!\n");
     // uint64_t i = 0;
     // while (1)
     // {
@@ -43,39 +43,31 @@ void init_testing(void) {
     // };
 }
 
-void init_therm_top(void) {
-    // Top config regfile 0
-    uint8_t therm_top_start = 1;
-    uint8_t therm_top_en = 1;
-    uint8_t therm_top_stop = 0;
-    uint8_t collect_en = 1;
-    uint8_t collect_mode = 1;
-    uint8_t pred_en = 0;
-    uint8_t pred_mode = 1;
-    uint8_t schedule_en = 0;
-    uint8_t store_sensor_mode = 2;
-    uint8_t action_offset = 4;
-    uint32_t num_itr = 0;
-    uint32_t sampling_intvl = 200;
-
-    // Top config regfile 1
-    uint32_t sensor_data_base_addr = 0xA000;
-    uint32_t pred_data_base_addr = 0xB000;
-    uint32_t action_base_addr = 0xC000;
-
-    // Top config regfile 2
-    uint16_t npu_input_buf_base_addr = 0x0;
-    uint16_t npu_output_buf_base_addr = 0x8;
-
-    uint16_t synthetic_sensor_thermal_encodings = 0x10;
-    uint16_t synthetic_sensor_current_encodings = 0x3;
-    uint16_t synthetic_sensor_voltage_encodings = 0x2;
-
-    // Top config regfile 3
-    uint32_t synthetic_action_sequence = 342391;
-    uint8_t store_pred_mode = 1;
-    uint8_t store_action_mode = 0;
-
+void init_therm_top(
+    uint8_t therm_top_start,
+    uint8_t therm_top_en,
+    uint8_t therm_top_stop,
+    uint8_t collect_en,
+    uint8_t collect_mode,
+    uint8_t pred_en,
+    uint8_t pred_mode,
+    uint8_t schedule_en,
+    uint8_t store_sensor_mode,
+    uint8_t action_offset,
+    uint32_t num_itr,
+    uint32_t sampling_intvl,
+    uint32_t sensor_data_base_addr,
+    uint32_t pred_data_base_addr,
+    uint32_t action_base_addr,
+    uint16_t npu_input_buf_base_addr,
+    uint16_t npu_output_buf_base_addr,
+    uint16_t synthetic_sensor_thermal_encodings,
+    uint16_t synthetic_sensor_current_encodings,
+    uint16_t synthetic_sensor_voltage_encodings,
+    uint32_t synthetic_action_sequence,
+    uint8_t store_pred_mode,
+    uint8_t store_action_mode
+) {
     uint64_t top_regfile_0_data = create_top_regfile_0_data(therm_top_start, therm_top_en, therm_top_stop, collect_en, collect_mode, pred_en, pred_mode, schedule_en, store_sensor_mode, action_offset, num_itr, sampling_intvl);
     uint64_t top_regfile_1_data = create_top_regfile_1_data(sensor_data_base_addr, pred_data_base_addr);
     uint64_t top_regfile_2_data = create_top_regfile_2_data(npu_input_buf_base_addr, npu_output_buf_base_addr, synthetic_sensor_thermal_encodings, synthetic_sensor_current_encodings, synthetic_sensor_voltage_encodings);
@@ -140,44 +132,27 @@ void init_q_table(void) {
     }
 }
 
-void init_sensor_weight(void) {
-    int64_t* sensor_weight_buffer_base_addr = (int64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
+// void init_sensor_weight(void) {
+//     int64_t* sensor_weight_buffer_base_addr = (int64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
+//     for (int i = 0; i < WEIGHT_I_NUM + WEIGHT_T_NUM + WEIGHT_V_NUM; i++) {
+//         // Write values to sensor weight buffer
+//         *(sensor_weight_buffer_base_addr + i) = sensor_weight[i];
+//     }
+//     return;
+// }
 
-    static int64_t sensor_weight[22] = {
-        1120538,
-        -3316961,
-        578850,
-        -472836,
-        2391,
-        246,
-        81,
-        -951,
-        -196,
-        809,
-        0b00000000111011001010111000000110,
-        0b11111111001001001101100101101000,
-        0b11111111111000000000000111001011,
-        0b00000000000000000000010010010010,
-        0b00000000000000000010011111101100,
-        0b00000000000000000000010010111001,
-
-        0b00000110001110011001111100101101,
-        0b11100101110010001011001110111110,
-        0b00000010010011011111100011111101,
-        0b00000000000001101100110000100100,
-        0b11111111111111101110001010111101,
-        0b11111111111111111111111110111000
-    };
-
-    for (int i = 0; i < WEIGHT_I_NUM + WEIGHT_T_NUM + WEIGHT_V_NUM; i++) {
-        // Write values to sensor weight buffer
-        *(sensor_weight_buffer_base_addr + i) = sensor_weight[i];
+void init_power_switch(void) {
+    uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
+    uint64_t reg0 = 0;
+    for (int i = 0; i < 7; i++) {
+        reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
     }
-
-    uint64_t* power_switch_base_addr = 0x40d00000;
-    *(power_switch_base_addr + 0) = 0b00100000001000000010000000100000001000000010000000100000;
-    *(power_switch_base_addr + 1) = 0b00100000001000000010000000100000001000000010000000100000;
-
+    uint64_t reg1 = 0;
+    for (int i = 0; i < 7; i++) {
+        reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
+    }
+    *(power_switch_base_addr + 0) = reg0;
+    *(power_switch_base_addr + 1) = reg1;
     return;
 }
 

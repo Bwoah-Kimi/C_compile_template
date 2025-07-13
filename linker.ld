@@ -28,10 +28,10 @@ SECTIONS
         *(COMMON)
     }
 
-    . = 0x30000000;
-    .custom_data : {
-        *(.custom_data)
-        *(.custom_data.*)
+    . = 0x60002238;
+    .sensor_weight : {
+        *(.sensor_weight)
+        *(.sensor_weight.*)
     }
 
 }

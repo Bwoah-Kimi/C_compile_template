@@ -6,9 +6,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
+#include "const_values.h"
 #include "store_data.h"
 #include "uart.h"
-#include "address_map.h"
 
 // void verify_sram_data(volatile uint64_t* sram_addr, const uint64_t* expected_data, uint64_t count, uint64_t flag_value) {
 //     asm volatile (

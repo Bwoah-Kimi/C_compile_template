@@ -9,12 +9,6 @@
 
 #include <stdint.h>
 
-// Neural network dimensions
-#define NUM_SENSORS 14
-#define INPUT_DIM 2 * NUM_SENSORS // 14 temp + 14 power encodings
-#define HIDDEN_DIM 64
-#define OUTPUT_DIM NUM_SENSORS // Future temperature predictions
-
 // Quantization functions
 /**
  * Convert uint32_t to quantized int8_t

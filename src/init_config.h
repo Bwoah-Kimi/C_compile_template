@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#include "address_map.h"
+#include "const_values.h"
 #include "load_npu.h"
 #include "nn_inference.h"
 #include "store_data.h"
@@ -27,11 +27,37 @@
 
 void init_testing(void);
 
-void init_therm_top(void);
+void init_therm_top(
+    uint8_t therm_top_start,
+    uint8_t therm_top_en,
+    uint8_t therm_top_stop,
+    uint8_t collect_en,
+    uint8_t collect_mode,
+    uint8_t pred_en,
+    uint8_t pred_mode,
+    uint8_t schedule_en,
+    uint8_t store_sensor_mode,
+    uint8_t action_offset,
+    uint32_t num_itr,
+    uint32_t sampling_intvl,
+    uint32_t sensor_data_base_addr,
+    uint32_t pred_data_base_addr,
+    uint32_t action_base_addr,
+    uint16_t npu_input_buf_base_addr,
+    uint16_t npu_output_buf_base_addr,
+    uint16_t synthetic_sensor_thermal_encodings,
+    uint16_t synthetic_sensor_current_encodings,
+    uint16_t synthetic_sensor_voltage_encodings,
+    uint32_t synthetic_action_sequence,
+    uint8_t store_pred_mode,
+    uint8_t store_action_mode
+);
 
 void init_rl_scheduler(void);
 
-void init_sensor_weight(void);
+// void init_sensor_weight(void);
+
+void init_power_switch(void);
 
 void init_standardization_unit(void);
 
