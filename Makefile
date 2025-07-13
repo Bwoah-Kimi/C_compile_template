@@ -19,7 +19,8 @@ OUTPUT_ASM=$(BUILD_DIR)/$(MAIN).asm
 OUTPUT_HEX=$(BUILD_DIR)/$(MAIN).hex
 
 ALL_DEPENDENCIES=$(shell $(RISCV_GCC) -M $(SRC_DIR)/$(MAIN).c 2>/dev/null | sed -e 's/^[^:]*: *//' -e 's/\\$$//' | tr -d '\n')
-SRC_FILES = $(sort $(patsubst %.h,%.c, $(filter $(SRC_DIR)/%, $(ALL_DEPENDENCIES))))
+SRC_FILES = $(sort $(foreach file, $(patsubst %.h,%.c, $(filter $(SRC_DIR)/%, $(ALL_DEPENDENCIES))), $(if $(wildcard $(file)), $(file))))
+# Note: The above SRC_FILES will include all .c files that are dependencies of main.c, and are located in the src directory, excluding .h files.
 
 all: $(OUTPUT_ELF)
 
@@ -30,7 +31,7 @@ $(OUTPUT_ELF): $(SRC_FILES)
 	$(RISCV_OBJDUMP) -D -s $(OUTPUT_ELF) > $(OUTPUT_ASM)
 	python3 $(UTILS_DIR)/asm2hex.py $(OUTPUT_ASM) $(OUTPUT_HEX)
 	python3 $(UTILS_DIR)/gdb_scripts.py $(MAIN)
-	python3 $(UTILS_DIR)/post_process_hex.py
+# 	python3 $(UTILS_DIR)/post_process_hex.py
 
 clean:
 	rm -rf $(BUILD_DIR) $(BINARY_DIR)

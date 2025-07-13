@@ -10,6 +10,11 @@
 
 #include <stdint.h>
 
+#include "address_map.h"
+#include "load_npu.h"
+#include "nn_inference.h"
+#include "store_data.h"
+
 #define NUM_STATES 512
 #define ACTIONS_PER_TABLE 4
 #define TOTAL_ACTIONS (ACTIONS_PER_TABLE * 2)
@@ -19,6 +24,8 @@
 #define WEIGHT_I_NUM 10
 #define NUM_SENSORS 14
 #define LOG_OUTPUT_WIDTH = 11
+
+void init_testing(void);
 
 void init_therm_top(void);
 
