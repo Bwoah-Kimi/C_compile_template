@@ -9,28 +9,33 @@ The directory structure and Makefile are designed to handle multiple C source fi
 .
 ├── Makefile
 ├── bin
-│   └── main.o
+│   └── main.elf
 ├── build
 │   ├── main.asm
 │   └── main.hex
 ├── linker.ld
-├── scripts
+├── utils
 │   ├── asm2hex.py
+│   ├── gdb_scripts.py
 │   ├── post_process_hex.py
 │   └── ...
+├── scripts
+│   └── main.gdb
 └── src
     ├── main.c
-    ├── startup.c
+    ├── startup.S
     ├── uart.c
     ├── uart.h
     └── ...
 ```
 
 - `Makefile`: The Makefile used to compile the C source files and generate the necessary output files.
-- `scripts/asm2hex.py`: A Python script to convert assembly files to hex files.
-- `scripts/post_process_hex.py`: A Python script to convert the data width of the hex file.
+- `utils/asm2hex.py`: A Python script to convert assembly files to hex files.
+- `utils/gdb_scripts.py`: A Python script to generate GDB scripts for debugging.
+- `utils/post_process_hex.py`: A Python script to convert the data width of the hex file.
 - `linker.ld`: The linker script used during the compilation process.
 - `src/`: Directory containing the C source files.
+- `scripts/`: Directory where the generated GDB scripts will be placed.
 - `bin/`: Directory where the compiled object file will be placed.
 - `build/`: Directory where the compiled assembly files, and hex files will be placed.
 
@@ -64,7 +69,7 @@ make MAIN=<main_file_name>
 ```
 If you don't specify the `MAIN` variable, the default main file name will be `main`.
 
-This will compile `$(MAIN).c` and all dependencies (found automatically by Makefile) in the `src/` directory and place the output files (`bin/$(MAIN).o`, `build/$(MAIN).asm`, `build/$(MAIN).hex`).
+This will compile `$(MAIN).c` and all dependencies (found automatically by Makefile) in the `src/` directory and generate the output files (`bin/$(MAIN).elf`, `build/$(MAIN).asm`, `build/$(MAIN).hex`, `scripts/`).
 
 ### Cleaning Up
 
@@ -86,7 +91,17 @@ The `asm2hex.py` script converts assembly files to hex files. It takes two comma
 python asm2hex.py <input_asm_file> <output_hex_file>
 ```
 
-## `64b_2_128b.py`
+## `gdb_scripts.py`
+
+This script generates GDB scripts for debugging the compiled C files, which will be called automatically by the Makefile.
+
+### Usage
+
+```sh
+python gdb_scripts.py <main_file_name>
+```
+
+## `post_process_hex.py`
 
 This script converts the generated `program.hex` into a 128-bit wide hex file `program_128b.hex`.
 
@@ -95,7 +110,7 @@ This is needed if the data width main memory of your system doesn't match 64-bit
 ### Usage
 
 ```sh
-python 64b_2_128b.py
+python post_process_hex.py
 ```
 
 The script will find the `build/program.hex` and convert it to `build/program_128b.hex`.

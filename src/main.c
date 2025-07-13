@@ -7,24 +7,32 @@
 #include <stdint.h>
 
 #include "uart.h"
+
 // #include "load_npu.h"
-#include "init_config.h"
+// #include "init_config.h"
 // #include "store_data.h"
 // #include "nn_inference.h"
 
+__attribute__((section(".custom_data")))
+static const uint64_t custom_patterns[] = {
+    0x0123456789ABCDEF,
+    0xFEDCBA9876543210,
+    0xAAAABBBBCCCCDDDD,
+    0x1111222233334444
+};
 
 int main(void) {
-    // init_uart(10000000, 101000);
-    // print_uart("Hello RISC-V CPU!\n");
+    init_uart(10000000, 101000);
+    print_uart("Hello RISC-V CPU!\n");
 
     // init_rl_scheduler();
     // init_q_table();
-    init_sensor_weight();
+    // init_sensor_weight();
     // init_standardization_unit();
 
     // NPU_load();
 
-    init_therm_top();
+    // init_therm_top();
 
     // print_uart("Config initialized!\n");
     // uint64_t i = 0;
