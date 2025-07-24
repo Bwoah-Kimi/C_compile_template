@@ -8,13 +8,13 @@
 
 #include "uart.h"
 #include "init_config.h"
+// Power switch and sensor weight values are placed in memory by linker script
 
 int main(void) {
     init_uart(10000000, 101000);
     print_uart("Starting IVT sensor test...\n");
 
     uint32_t num_itr = 1;
-    init_power_switch();
     init_therm_top(
         1,        // therm_top_start
         1,        // therm_top_en
@@ -24,7 +24,7 @@ int main(void) {
         0,        // pred_en
         1,        // pred_mode
         0,        // schedule_en
-        2,        // store_sensor_mode
+        1,        // store_sensor_mode
         4,        // action_offset
         num_itr,  // num_itr
         10000,    // sampling_intvl
@@ -42,7 +42,11 @@ int main(void) {
     );
 
     for (int i = 0; i < num_itr; i++) {
-        store_sensor_data(i);
+        store_sensor_data(
+            i,
+            1,  // read_code
+            1   // read_freq
+        );
     }
 
     print_uart("IVT sensor test finished!\n");

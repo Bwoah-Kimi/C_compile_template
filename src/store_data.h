@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-void store_sensor_data(uint8_t itr);
+void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq);
 void store_pred_data(uint8_t itr);
 void store_rl_action(uint8_t itr);
 

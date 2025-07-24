@@ -34,4 +34,10 @@ SECTIONS
         *(.sensor_weight.*)
     }
 
+    . = 0x40d00000;
+    .power_switch_code : {
+        *(.power_switch_code)
+        *(.power_switch_code.*)
+    }
+
 }

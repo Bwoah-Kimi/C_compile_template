@@ -13,7 +13,7 @@
 // Power switch configurations
 // 14 power switches, each 8-bit configuration
 //////////////////////////////////////////////////
-static const uint8_t power_switch_config[14] = {
+__attribute__((section(".power_switch_code"))) static const uint8_t power_switch_config[14] = {
     0b00100000,  // Power switch 0
     0b00100000,  // Power switch 1
     0b00100000,  // Power switch 2
@@ -37,31 +37,34 @@ static const uint8_t power_switch_config[14] = {
 // Start from 0x60002238
 //////////////////////////////////////////////////
 __attribute__((section(".sensor_weight"))) static const int64_t sensor_weight[22] = {
-    1120538,
-    -3316961,
-    578850,
-    -472836,
-    2391,
-    246,
-    81,
-    -951,
-    -196,
-    809,
-    0b00000000111011001010111000000110,
-    0b11111111001001001101100101101000,
-    0b11111111111000000000000111001011,
-    0b00000000000000000000010010010010,
-    0b00000000000000000010011111101100,
-    0b00000000000000000000010010111001,
+    // Current calculation weights [0-9] (10 x 64-bit values)
+    1120538,      // Current weight 0
+    -3316961,     // Current weight 1
+    578850,       // Current weight 2
+    -472836,      // Current weight 3
+    2391,         // Current weight 4
+    246,          // Current weight 5
+    81,           // Current weight 6
+    -951,         // Current weight 7
+    -196,         // Current weight 8
+    809,          // Current weight 9
 
-    0b00000110001110011001111100101101,
-    0b11100101110010001011001110111110,
-    0b00000010010011011111100011111101,
-    0b00000000000001101100110000100100,
-    0b11111111111111101110001010111101,
-    0b11111111111111111111111110111000
+    // Voltage calculation weights [10-15] (6 x 64-bit values)
+    0b00000000111011001010111000000110,   // Voltage weight 0
+    0b11111111001001001101100101101000,   // Voltage weight 1
+    0b11111111111000000000000111001011,   // Voltage weight 2
+    0b00000000000000000000010010010010,   // Voltage weight 3
+    0b00000000000000000010011111101100,   // Voltage weight 4
+    0b00000000000000000000010010111001,   // Voltage weight 5
+
+    // Thermal calculation weights [16-21] (6 x 64-bit values)
+    0b00000110001110011001111100101101,   // Thermal weight 0
+    0b11100101110010001011001110111110,   // Thermal weight 1
+    0b00000010010011011111100011111101,   // Thermal weight 2
+    0b00000000000001101100110000100100,   // Thermal weight 3
+    0b11111111111111101110001010111101,   // Thermal weight 4
+    0b11111111111111111111111110111000    // Thermal weight 5
 };
-
 
 //////////////////////////////////////////////////
 // Neural network inference
