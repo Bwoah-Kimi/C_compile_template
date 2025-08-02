@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Author:          Zhantong Zhu
 // Acknowledgement: GitHub Copilot
-// Description:     C code for sensor collection function
+// Description:     C code for test chip basic functionality
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>
@@ -31,9 +31,12 @@ void generate_synthetic_encodings(
     }
 }
 
-int main(void) {
-    init_uart(10000000, 101000);
-    print_uart("Starting sensor collection test...\n");
+void test_mem_layout(void) {
+    return;
+}
+
+void test_synthetic_sensor_data_collection(void) {
+    print_uart("=== Starting Synthetic Sensor Data Collection Test... ===\n");
 
     uint32_t num_itr = 5;
     // Don't initialize power switch on FPGA
@@ -73,6 +76,7 @@ int main(void) {
     sensor_encodings_t expected_encodings;
     sensor_encodings_t read_encodings;
     uint64_t* sensor_data_base_addr = (uint64_t*)SENSOR_ENCODINGS_BASE_ADDR;
+    uint32_t error_count = 0;
     for (uint32_t itr = 0; itr < num_itr; itr++) {
         generate_synthetic_encodings(
             synthetic_sensor_thermal_encodings,
@@ -113,6 +117,7 @@ int main(void) {
             else {
                 // Mismatch found
                 match_success = 0;
+                error_count++;
                 print_uart("  Mismatch for Sensor ");
                 print_uart_int((uint32_t)j);
                 print_uart(":\n");
@@ -136,13 +141,22 @@ int main(void) {
                 print_uart("\n");
             }
         }
-        if (match_success) {
-            print_uart("  All encodings match for this iteration!\n");
-        }
-        else {
-            print_uart("  Mismatch found in this iteration!\n");
-        }
     }
 
-    return 0;
+    if (error_count == 0) {
+        print_uart("All sensor encodings match expected values.\n");
+    } else {
+        print_uart("Test completed with ");
+        print_uart_int(error_count);
+        print_uart(" errors.\n");
+    }
+    print_uart("=== Synthetic Sensor Data Collection Test Completed ===\n");
+    return;
+}
+
+int main(void) {
+    init_uart(10000000, 101000);
+
+    // Test synthetic sensor data collection
+    test_synthetic_sensor_data_collection();
 }
