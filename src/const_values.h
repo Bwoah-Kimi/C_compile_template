@@ -13,24 +13,24 @@
 // Power switch configurations
 // 14 power switches, each 8-bit configuration
 //////////////////////////////////////////////////
-__attribute__((section(".power_switch_code"))) static const uint8_t power_switch_config[14] = {
-    0b00100000,  // Power switch 0
-    0b00100000,  // Power switch 1
-    0b00100000,  // Power switch 2
-    0b00100000,  // Power switch 3
-    0b00100000,  // Power switch 4
-    0b00100000,  // Power switch 5
-    0b00100000,  // Power switch 6
-    0b00100000,  // Power switch 7
-    0b00100000,  // Power switch 8
-    0b00100000,  // Power switch 9
-    0b00100000,  // Power switch 10
-    0b00100000,  // Power switch 11
-    0b00100000,  // Power switch 12
-    0b00100000   // Power switch 13
-};
+// __attribute__((section(".power_switch_code"))) static const uint8_t power_switch_config[14] = {
+//     0b00100000,  // Power switch 0
+//     0b00100000,  // Power switch 1
+//     0b00100000,  // Power switch 2
+//     0b00100000,  // Power switch 3
+//     0b00100000,  // Power switch 4
+//     0b00100000,  // Power switch 5
+//     0b00100000,  // Power switch 6
+//     0b00100000,  // Power switch 7
+//     0b00100000,  // Power switch 8
+//     0b00100000,  // Power switch 9
+//     0b00100000,  // Power switch 10
+//     0b00100000,  // Power switch 11
+//     0b00100000,  // Power switch 12
+//     0b00100000   // Power switch 13
+// };
 
-#define NUM_POWER_SWITCHES 14
+// #define NUM_POWER_SWITCHES 14
 
 //////////////////////////////////////////////////
 // Sensor weight values
@@ -104,5 +104,12 @@ __attribute__((section(".sensor_weight"))) static const int64_t sensor_weight[22
 #define CPU_STORE_PRED_FINISH_FLAG 0x2C2C2C2C00000000
 #define CPU_STORE_ACTION_START_FLAG 0x00000000D3D3D3D3
 #define CPU_STORE_ACTION_FINISH_FLAG 0x3D3D3D3D00000000
+
+////////////////////////////////////////////////
+// THERM_TOP Constants
+////////////////////////////////////////////////
+
+#define NUM_STATES 512
+#define ACTION_PER_TABLE 4
 
 #endif // ADDRESS_MAP_H

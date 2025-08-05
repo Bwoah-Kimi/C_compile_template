@@ -11,38 +11,6 @@
 #include "init_config.h"
 #include "uart.h"
 
-void init_testing(void) {
-    // init_rl_scheduler();
-    // init_q_table();
-    // init_sensor_weight();
-    // init_standardization_unit();
-
-    // NPU_load();
-
-    // init_therm_top();
-
-    // uint64_t i = 0;
-    // while (1)
-    // {
-    //     // Store sensor data
-    //     store_sensor_data(i);
-
-    //     // NN model inference
-    //     run_model_inference();
-
-    //     // Store prediction data
-    //     store_pred_data(i);
-    //     i++;
-    // }
-
-    // while (1) {
-    //     asm volatile(
-    //         "li t5, 0xC0DEDEAD\n"
-    //         "nop\n"
-    //         );
-    // };
-}
-
 void init_therm_top(
     uint8_t therm_top_start,
     uint8_t therm_top_en,
@@ -141,20 +109,20 @@ void init_q_table(void) {
 //     return;
 // }
 
-void init_power_switch(void) {
-    uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
-    uint64_t reg0 = 0;
-    for (int i = 0; i < 7; i++) {
-        reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
-    }
-    uint64_t reg1 = 0;
-    for (int i = 0; i < 7; i++) {
-        reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
-    }
-    *(power_switch_base_addr + 0) = reg0;
-    *(power_switch_base_addr + 1) = reg1;
-    return;
-}
+// void init_power_switch(void) {
+//     uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
+//     uint64_t reg0 = 0;
+//     for (int i = 0; i < 7; i++) {
+//         reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
+//     }
+//     uint64_t reg1 = 0;
+//     for (int i = 0; i < 7; i++) {
+//         reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
+//     }
+//     *(power_switch_base_addr + 0) = reg0;
+//     *(power_switch_base_addr + 1) = reg1;
+//     return;
+// }
 
 void init_standardization_unit(void) {
     uint64_t* quant_config_regfile_base_addr = (uint64_t*)QUANT_CONFIG_REGFILE_BASE_ADDR;
@@ -175,6 +143,10 @@ void init_standardization_unit(void) {
         quant_config_regfile_base_addr[i] = quant_config[i];
         dequant_config_regfile_base_addr[i] = dequant_config[i];
     }
+}
+
+void init_npu(void) {
+    return;
 }
 
 uint64_t create_top_regfile_0_data(uint8_t therm_top_start, uint8_t therm_top_en, uint8_t therm_top_stop, uint8_t collect_en, uint8_t collect_mode, uint8_t pred_en, uint8_t pred_mode, uint8_t schedule_en, uint8_t store_sensor_mode, uint8_t action_offset, uint32_t num_itr, uint32_t sampling_intvl) {

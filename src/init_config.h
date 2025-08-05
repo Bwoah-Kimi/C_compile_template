@@ -11,8 +11,8 @@
 #include <stdint.h>
 
 #include "const_values.h"
-#include "load_npu.h"
-#include "nn_inference.h"
+// #include "load_npu.h"
+// #include "nn_inference.h"
 #include "store_data.h"
 
 #define NUM_STATES 512
@@ -23,9 +23,6 @@
 #define WEIGHT_V_NUM 6
 #define WEIGHT_I_NUM 10
 #define NUM_SENSORS 14
-#define LOG_OUTPUT_WIDTH = 11
-
-void init_testing(void);
 
 void init_therm_top(
     uint8_t therm_top_start,
@@ -57,11 +54,13 @@ void init_rl_scheduler(void);
 
 // void init_sensor_weight(void);
 
-void init_power_switch(void);
+// void init_power_switch(void);
 
 void init_standardization_unit(void);
 
 void init_q_table(void);
+
+void init_npu(void);
 
 uint64_t create_rl_config_regfile_0_data(
     uint16_t coef_k1,
