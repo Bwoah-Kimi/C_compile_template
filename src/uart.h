@@ -23,7 +23,7 @@
 
 void init_uart(uint32_t freq, uint32_t baud);
 
-void print_uart(const char *str);
+void print_uart(const char* str);
 
 void print_uart_int(uint32_t data);
 
@@ -33,14 +33,18 @@ void print_uart_byte(uint8_t byte);
 
 void print_uart_char(char c);
 
-void load_uart(char *str, char terminator);
+void print_uart_dec(uint32_t data);
+void print_uart_dec64(uint64_t data);
+void print_uart_dec_formatted(uint64_t data);
 
-void load_uart_int(uint32_t *data);
+void load_uart(char* str, char terminator);
 
-void load_uart_addr(uint64_t *addr);
+void load_uart_int(uint32_t* data);
 
-void load_uart_byte(uint8_t *byte);
+void load_uart_addr(uint64_t* addr);
 
-int load_uart_char(uint8_t *res);
+void load_uart_byte(uint8_t* byte);
 
-void load_uart_timeout(char *str, char terminator, int max_len, uint32_t timeout);
+int load_uart_char(uint8_t* res);
+
+void load_uart_timeout(char* str, char terminator, int max_len, uint32_t timeout);

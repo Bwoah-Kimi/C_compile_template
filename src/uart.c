@@ -7,13 +7,13 @@
 
 void write_reg_u8(uintptr_t addr, uint8_t value)
 {
-    volatile uint8_t *loc_addr = (volatile uint8_t *)addr;
+    volatile uint8_t* loc_addr = (volatile uint8_t*)addr;
     *loc_addr = value;
 }
 
 uint8_t read_reg_u8(uintptr_t addr)
 {
-    return *(volatile uint8_t *)addr;
+    return *(volatile uint8_t*)addr;
 }
 
 int is_transmit_empty()
@@ -49,7 +49,7 @@ void print_uart_char(char a)
     write_reg_u8(UART_THR, a);
 }
 
-int load_uart_char(uint8_t *res)
+int load_uart_char(uint8_t* res)
 {
     if (is_receive_empty())
     {
@@ -61,7 +61,7 @@ int load_uart_char(uint8_t *res)
 }
 
 uint8_t bin_to_hex_table[16] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 void bin_to_hex(uint8_t inp, uint8_t res[2])
 {
@@ -93,9 +93,9 @@ void init_uart(uint32_t freq, uint32_t baud)
     write_reg_u8(UART_MODEM_CONTROL, 0x20);             // Autoflow mode
 }
 
-void print_uart(const char *str)
+void print_uart(const char* str)
 {
-    const char *cur = &str[0];
+    const char* cur = &str[0];
     while (*cur != '\0')
     {
         print_uart_char((uint8_t)*cur);
@@ -135,7 +135,77 @@ void print_uart_byte(uint8_t byte)
     print_uart_char(hex[1]);
 }
 
-void load_uart(char *str, char terminator)
+// Print unsigned 32-bit integer in decimal format
+void print_uart_dec(uint32_t data) {
+    if (data == 0) {
+        print_uart_char('0');
+        return;
+    }
+
+    char buffer[11]; // Max digits for uint32_t is 10 + null terminator
+    int i = 0;
+
+    // Convert to string (reverse order)
+    while (data > 0) {
+        buffer[i++] = '0' + (data % 10);
+        data /= 10;
+    }
+
+    // Print in correct order
+    for (int j = i - 1; j >= 0; j--) {
+        print_uart_char(buffer[j]);
+    }
+}
+
+// Print unsigned 64-bit integer in decimal format
+void print_uart_dec64(uint64_t data) {
+    if (data == 0) {
+        print_uart_char('0');
+        return;
+    }
+
+    char buffer[21]; // Max digits for uint64_t is 20 + null terminator
+    int i = 0;
+
+    // Convert to string (reverse order)
+    while (data > 0) {
+        buffer[i++] = '0' + (data % 10);
+        data /= 10;
+    }
+
+    // Print in correct order
+    for (int j = i - 1; j >= 0; j--) {
+        print_uart_char(buffer[j]);
+    }
+}
+
+// Print with thousands separators for better readability
+void print_uart_dec_formatted(uint64_t data) {
+    if (data == 0) {
+        print_uart_char('0');
+        return;
+    }
+
+    char buffer[26]; // Max digits + separators for uint64_t
+    int i = 0;
+    int digit_count = 0;
+
+    // Convert to string with commas (reverse order)
+    while (data > 0) {
+        if (digit_count > 0 && digit_count % 3 == 0) {
+            buffer[i++] = ',';
+        }
+        buffer[i++] = '0' + (data % 10);
+        data /= 10;
+        digit_count++;
+    }
+
+    // Print in correct order
+    for (int j = i - 1; j >= 0; j--) {
+        print_uart_char(buffer[j]);
+    }
+}
+void load_uart(char* str, char terminator)
 {
     uint8_t c;
     int i = 0;
@@ -153,15 +223,15 @@ void load_uart(char *str, char terminator)
     }
 }
 
-void load_uart_int(uint32_t *data)
+void load_uart_int(uint32_t* data)
 {
     *data = 0;
     for (int i = 3; i > -1; i--)
     {
         uint8_t byte;
         uint8_t hex[2];
-        while (!load_uart_char(&hex[0])){}
-        while (!load_uart_char(&hex[1])){}
+        while (!load_uart_char(&hex[0])) {}
+        while (!load_uart_char(&hex[1])) {}
         if (hex[0] == '\n' || hex[1] == '\n')
             byte = 0;
         else
@@ -170,15 +240,15 @@ void load_uart_int(uint32_t *data)
     }
 }
 
-void load_uart_addr(uint64_t *addr)
+void load_uart_addr(uint64_t* addr)
 {
     *addr = 0;
     for (int i = 7; i > -1; i--)
     {
         uint8_t byte;
         uint8_t hex[2];
-        while (!load_uart_char(&hex[0])){}
-        while (!load_uart_char(&hex[1])){}
+        while (!load_uart_char(&hex[0])) {}
+        while (!load_uart_char(&hex[1])) {}
         if (hex[0] == '\n' || hex[1] == '\n')
             byte = 0;
         else
@@ -187,18 +257,18 @@ void load_uart_addr(uint64_t *addr)
     }
 }
 
-void load_uart_byte(uint8_t *byte)
+void load_uart_byte(uint8_t* byte)
 {
     uint8_t hex[2];
-    while (!load_uart_char(&hex[0])){}
-    while (!load_uart_char(&hex[1])){}
+    while (!load_uart_char(&hex[0])) {}
+    while (!load_uart_char(&hex[1])) {}
     if (hex[0] == '\n' || hex[1] == '\n')
         *byte = 0;
     else
         *byte = (hex_to_bin(hex[0]) << 4) | hex_to_bin(hex[1]);
 }
 
-void load_uart_timeout(char *str, char terminator, int max_len, uint32_t timeout)
+void load_uart_timeout(char* str, char terminator, int max_len, uint32_t timeout)
 {
     uint8_t c;
     int i = 0;
