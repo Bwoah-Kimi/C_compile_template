@@ -12,6 +12,7 @@ SRC_DIR=src
 BUILD_DIR=build
 UTILS_DIR=utils
 BINARY_DIR=bin
+SCRIPTS_DIR=scripts
 
 MAIN?=main
 OUTPUT_ELF=$(BINARY_DIR)/$(MAIN).elf
@@ -34,4 +35,4 @@ $(OUTPUT_ELF): $(SRC_FILES)
 # 	python3 $(UTILS_DIR)/post_process_hex.py
 
 clean:
-	rm -rf $(BUILD_DIR) $(BINARY_DIR)
+	rm -rf $(BUILD_DIR) $(BINARY_DIR) $(SCRIPTS_DIR)
