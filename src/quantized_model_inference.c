@@ -2,8 +2,8 @@
 #include <stdbool.h>
 
 #include "quantized_model_inference.h"
-// #include "quantized_mlp_170_256_85_w8_a8_p1_model.h"
-#include "quantized_mlp_28_64_14_w8_a8_p1_model.h"
+// Include the PTQ model instead of the old quantized model
+#include "ptq_mlp_28_32_32_14_w8_a8_model.h"
 
 // Clamp to target range with proper bounds checking
 static inline int8_t clamp_to_target_range(int32_t value) {
@@ -12,7 +12,7 @@ static inline int8_t clamp_to_target_range(int32_t value) {
     return (int8_t)value;
 }
 
-// Updated quantize_input_data using integer-only bit-shift scaling
+// Quantize input data using integer-only bit-shift scaling
 void quantize_input_data(const uint32_t* power_traces, const uint16_t* thermal_traces,
     int8_t* quantized_input, uint16_t num_sensors) {
     uint16_t input_idx = 0;
@@ -72,7 +72,7 @@ void quantize_input_data(const uint32_t* power_traces, const uint16_t* thermal_t
     }
 }
 
-// Updated dequantize_output_data to convert back to UINT10 thermal traces
+// Dequantize output data to convert back to UINT10 thermal traces
 void dequantize_output_data(const int32_t* quantized_output, uint16_t* thermal_output, uint16_t output_size) {
     for (uint16_t i = 0; i < output_size; i++) {
         // Reverse the quantization process:
@@ -100,13 +100,6 @@ void dequantize_output_data(const int32_t* quantized_output, uint16_t* thermal_o
     }
 }
 
-// Fixed-point arithmetic helpers
-int32_t fixed_point_multiply(int32_t a, int16_t b, uint8_t precision_bits) {
-    // Multiply and then shift right to maintain precision
-    int64_t result = (int64_t)a * b;
-    return (int32_t)(result >> precision_bits);
-}
-
 static inline int8_t clamp_int8(int32_t value) {
     if (value > 127) return 127;
     if (value < -128) return -128;
@@ -119,63 +112,51 @@ static inline int32_t clamp_int32(int64_t value) {
     return (int32_t)value;
 }
 
-// Pure integer quantized linear layer forward pass
-void quantized_linear_forward(const QuantizedLinearLayer* layer, const int8_t* input, int32_t* output) {
-    for (uint16_t out_idx = 0; out_idx < layer->out_features; out_idx++) {
+// PTQ Linear layer forward pass
+void ptq_linear_forward(const ptq_layer_config_t* layer, const int32_t* input, int32_t* output) {
+    for (uint16_t out_idx = 0; out_idx < layer->output_size; out_idx++) {
         int64_t accumulator = 0;
 
-        // Get scaling parameters for this output channel
-        int16_t scale_int = layer->scale_int[out_idx];
-        int8_t zero_point = layer->zero_point[out_idx];
+        // Matrix multiplication: output = input @ weight.T + bias
+        for (uint16_t in_idx = 0; in_idx < layer->input_size; in_idx++) {
+            uint32_t weight_idx = out_idx * layer->input_size + in_idx;
+            int8_t weight = layer->weights[weight_idx];
+            int32_t input_val = input[in_idx];
 
-        // Matrix multiplication with quantized weights and inputs
-        for (uint16_t in_idx = 0; in_idx < layer->in_features; in_idx++) {
-            uint32_t weight_idx = out_idx * layer->in_features + in_idx;
-            int8_t quantized_weight = layer->int_weights[weight_idx];
-            int8_t quantized_input = input[in_idx];
-
-            // Dequantize weight: (quantized_weight - zero_point)
-            int16_t dequant_weight = (int16_t)(quantized_weight - zero_point);
-
-            // Multiply quantized input by dequantized weight
-            // Both input and dequant_weight are small integers, safe to multiply
-            accumulator += (int64_t)quantized_input * dequant_weight;
+            // Integer matrix multiplication
+            accumulator += (int64_t)input_val * weight;
         }
 
-        // Apply weight scaling: result = accumulator * scale_int
-        // We keep this in higher precision to avoid overflow
-        int64_t scaled_result = accumulator * scale_int;
+        // Add bias
+        accumulator += (int64_t)layer->bias[out_idx];
 
-        // Add bias (already in fixed-point format with precision_bits scaling)
-        scaled_result += (int64_t)layer->bias_fixed[out_idx];
-
-        // Store result as 32-bit fixed-point (with precision_bits fractional bits)
-        output[out_idx] = clamp_int32(scaled_result);
+        // Store result as int32 (this matches the Python implementation)
+        output[out_idx] = clamp_int32(accumulator);
     }
 }
 
-// Pure integer per-channel quantization forward pass
-void quantization_layer_forward(const QuantizationLayer* quant, const int32_t* input, int8_t* output) {
+// PTQ Quantization layer forward pass
+void ptq_quantization_forward(const ptq_quant_config_t* quant, const int32_t* input, int32_t* output) {
     for (uint16_t ch = 0; ch < quant->num_channels; ch++) {
-        // Get scaling parameters for this channel
         int16_t scale_int = quant->scale_int[ch];
         int8_t zero_point = quant->zero_point[ch];
 
-        // Quantize: input * scale_int / (2^precision_bits) + zero_point
-        int32_t scaled_input = fixed_point_multiply(input[ch], scale_int, quant->precision_bits);
-        int32_t quantized_raw = scaled_input + (int32_t)zero_point;
+        // Apply quantization formula: output = (input + zero_point) / scale_int
+        int64_t input_with_zp = (int64_t)input[ch] + (int64_t)zero_point;
 
-        // Clamp to quantization range
-        int8_t quantized = clamp_int8(quantized_raw);
-        if (quantized < quant->qmin) quantized = quant->qmin;
-        if (quantized > quant->qmax) quantized = quant->qmax;
+        // Integer division (matches Python // operator)
+        int32_t quantized = (int32_t)(input_with_zp / scale_int);
+
+        // Clamp to quantization range [-128, 127] for 8-bit
+        if (quantized > 127) quantized = 127;
+        if (quantized < -128) quantized = -128;
 
         output[ch] = quantized;
     }
 }
 
-// ReLU activation function for 8-bit integers
-void relu_activation_int8(int8_t* data, uint16_t size) {
+// ReLU activation function for int32 values
+void relu_activation_int32(int32_t* data, uint16_t size) {
     for (uint16_t i = 0; i < size; i++) {
         if (data[i] < 0) {
             data[i] = 0;
@@ -183,74 +164,66 @@ void relu_activation_int8(int8_t* data, uint16_t size) {
     }
 }
 
-// Main inference function using pure integer arithmetic
-int quantized_mlp_inference(const QuantizedMLP* model, const int8_t* input_quantized, int32_t* output_fixed) {
+// Main PTQ inference function - matches Python forward_integer
+int ptq_mlp_inference(const int32_t* input_int32, int32_t* output_int32) {
     // Temporary buffers for intermediate activations
-    static int8_t layer_input_int8[MAX_NEURONS];
-    static int32_t layer_output_fixed[MAX_NEURONS];
-    static int8_t quant_output_int8[MAX_NEURONS];
+    static int32_t layer_input[MAX_NEURONS];  // Max hidden size
+    static int32_t layer_output[MAX_NEURONS];
+    static int32_t quant_output[MAX_NEURONS];
 
-    // Copy quantized input to working buffer
-    for (uint16_t i = 0; i < model->input_size; i++) {
-        layer_input_int8[i] = input_quantized[i];
+    // Copy input to working buffer
+    for (uint16_t i = 0; i < MLP_INPUT_SIZE; i++) {
+        layer_input[i] = input_int32[i];
     }
 
     // Process through all hidden layers
-    for (uint16_t layer_idx = 0; layer_idx < model->num_hidden_layers; layer_idx++) {
-        // Linear transformation (produces fixed-point output)
-        quantized_linear_forward(&model->layers[layer_idx], layer_input_int8, layer_output_fixed);
+    for (uint16_t layer_idx = 0; layer_idx < MLP_NUM_HIDDEN_LAYERS; layer_idx++) {
+        // Linear transformation
+        ptq_linear_forward(&ptq_layer_configs[layer_idx], layer_input, layer_output);
 
-        // Quantization (converts fixed-point to 8-bit integers)
-        quantization_layer_forward(&model->quant_layers[layer_idx], layer_output_fixed, quant_output_int8);
+        // Quantization (compensation absorbed in scale_int)
+        ptq_quantization_forward(&ptq_quant_configs[layer_idx], layer_output, quant_output);
 
-        // ReLU activation (operates on 8-bit integers)
-        relu_activation_int8(quant_output_int8, model->layers[layer_idx].out_features);
+        // ReLU activation
+        relu_activation_int32(quant_output, ptq_layer_configs[layer_idx].output_size);
 
         // Copy quantized output to input buffer for next layer
-        for (uint16_t i = 0; i < model->layers[layer_idx].out_features; i++) {
-            layer_input_int8[i] = quant_output_int8[i];
+        for (uint16_t i = 0; i < ptq_layer_configs[layer_idx].output_size; i++) {
+            layer_input[i] = quant_output[i];
         }
     }
 
-    // Output layer (no quantization or activation) - produces fixed-point output
-    quantized_linear_forward(&model->layers[model->num_hidden_layers], layer_input_int8, output_fixed);
+    // Output layer (linear transformation)
+    ptq_linear_forward(&ptq_layer_configs[MLP_NUM_HIDDEN_LAYERS], layer_input, layer_output);
+
+    // Output quantization
+    ptq_quantization_forward(&ptq_quant_configs[2], layer_output, output_int32);
 
     return 0; // Success
 }
 
-// Initialize the QuantizedMLP model structure
+// Wrapper function to convert from int8 input to int32 and call PTQ inference
+int quantized_mlp_inference(const QuantizedMLP* model, const int8_t* input_quantized, int32_t* output_fixed) {
+    // Convert int8 input to int32 (matches Python: x_int = torch.round(x).to(torch.int32))
+    static int32_t input_int32[MLP_INPUT_SIZE];
+
+    for (uint16_t i = 0; i < MLP_INPUT_SIZE; i++) {
+        input_int32[i] = (int32_t)input_quantized[i];
+    }
+
+    // Call PTQ inference
+    return ptq_mlp_inference(input_int32, output_fixed);
+}
+
+// Initialize the QuantizedMLP model structure (kept for compatibility)
 void initialize_quantized_model(QuantizedMLP* model) {
-    // Set model configuration
+    // Set model configuration to match PTQ model
     model->num_layers = MLP_NUM_LAYERS;
     model->num_hidden_layers = MLP_NUM_HIDDEN_LAYERS;
     model->input_size = MLP_INPUT_SIZE;
     model->output_size = MLP_OUTPUT_SIZE;
     model->activation_bits = MLP_ACTIVATION_BITS;
     model->weight_bits = MLP_WEIGHT_BITS;
-    model->precision_bits = MLP_PRECISION_BITS;
 
-    // Initialize layers using the layer_configs array
-    for (uint16_t i = 0; i < model->num_layers; i++) {
-        model->layers[i].int_weights = (int8_t*)layer_configs[i].weights;
-        model->layers[i].bias_fixed = (int32_t*)layer_configs[i].bias;
-        model->layers[i].scale_int = (int16_t*)layer_configs[i].scale_int;
-        model->layers[i].zero_point = (int8_t*)layer_configs[i].zero_point;
-        model->layers[i].in_features = layer_configs[i].input_size;
-        model->layers[i].out_features = layer_configs[i].output_size;
-        model->layers[i].weight_bits = MLP_WEIGHT_BITS;
-        model->layers[i].precision_bits = MLP_PRECISION_BITS;
-    }
-
-    // Initialize quantization layers (only for hidden layers, not output)
-    for (uint16_t i = 0; i < model->num_hidden_layers; i++) {
-        model->quant_layers[i].scale_int = (int16_t*)quant_configs[i].scale_int;
-        model->quant_layers[i].zero_point = (int8_t*)quant_configs[i].zero_point;
-        model->quant_layers[i].num_channels = quant_configs[i].num_channels;
-        model->quant_layers[i].output_bits = MLP_ACTIVATION_BITS;
-        model->quant_layers[i].precision_bits = MLP_PRECISION_BITS;
-        model->quant_layers[i].qmin = -128;
-        model->quant_layers[i].qmax = 127;
-    }
     return;
 }
-
