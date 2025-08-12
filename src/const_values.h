@@ -10,29 +10,6 @@
 #include <stdint.h>
 
 //////////////////////////////////////////////////
-// Power switch configurations
-// 14 power switches, each 8-bit configuration
-//////////////////////////////////////////////////
-static const uint8_t power_switch_config[14] = {
-    0b00100000,  // Power switch 0
-    0b00100000,  // Power switch 1
-    0b00100000,  // Power switch 2
-    0b00100000,  // Power switch 3
-    0b00100000,  // Power switch 4
-    0b00100000,  // Power switch 5
-    0b00100000,  // Power switch 6
-    0b00100000,  // Power switch 7
-    0b00100000,  // Power switch 8
-    0b00100000,  // Power switch 9
-    0b00100000,  // Power switch 10
-    0b00100000,  // Power switch 11
-    0b00100000,  // Power switch 12
-    0b00100000   // Power switch 13
-};
-
-// #define NUM_POWER_SWITCHES 14
-
-//////////////////////////////////////////////////
 // Sensor weight values
 // Start from 0x60002238
 //////////////////////////////////////////////////
@@ -50,12 +27,12 @@ static const int64_t sensor_weight[22] = {
     809,          // Current weight 9
 
     // Voltage calculation weights [10-15] (6 x 64-bit values)
-    0b00000000111011001010111000000110,   // Voltage weight 0
-    0b11111111001001001101100101101000,   // Voltage weight 1
-    0b11111111111000000000000111001011,   // Voltage weight 2
-    0b00000000000000000000010010010010,   // Voltage weight 3
-    0b00000000000000000010011111101100,   // Voltage weight 4
-    0b00000000000000000000010010111001,   // Voltage weight 5
+    -137582922,
+    505722877,
+    -62639265,
+    -428932,
+    108773,
+    -5536,
 
     // Thermal calculation weights [16-21] (6 x 64-bit values)
     0b00000110001110011001111100101101,   // Thermal weight 0
@@ -95,6 +72,7 @@ static const int64_t sensor_weight[22] = {
 #define CPU_STORE_ACTION_PERF_COUNTER_ADDR 0x60008018
 
 #define POWER_SWITCH_BASE_ADDR 0x40d00000
+#define DCO_CONFIG_BASE_ADDR 0x20000000
 
 #define CPU_COMPUTE_START_FLAG 0x00000000A5A5A5A5
 #define CPU_COMPUTE_FINISH_FLAG 0x5A5A5A5A00000000

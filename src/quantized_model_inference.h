@@ -70,6 +70,7 @@ typedef struct {
 void quantize_input_data(const uint32_t* power_traces, const uint16_t* thermal_traces, int8_t* quantized_input, uint16_t num_sensors);
 void dequantize_output_data(const int32_t* quantized_output, uint16_t* thermal_output, uint16_t output_size);
 int quantized_mlp_inference(const QuantizedMLP* model, const int8_t* input_quantized, int32_t* output_fixed);
+void initialize_quantized_model(QuantizedMLP* model);
 // void quantized_linear_forward(const QuantizedLinearLayer* layer, const int8_t* input, int32_t* output);
 // void quantization_layer_forward(const QuantizationLayer* quant, const int32_t* input, int8_t* output);
 // void relu_activation_int8(int8_t* data, uint16_t size);

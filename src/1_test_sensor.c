@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////////
-// Author:          Zhantong Zhu
+// Author:          Zhantong Zhu, Xueping Liu
 // Acknowledgement: GitHub Copilot
 // Description:     C code for IVT sensor testing
 //////////////////////////////////////////////////////////////////////////////////
@@ -8,13 +8,25 @@
 
 #include "uart.h"
 #include "init_config.h"
+
 // Power switch and sensor weight values are placed in memory by linker script
+//  set{int}0x20000000=
+//  set{int}0x20000004=
+//  set{int}0x2000000c=
+//  Freqref=7.2MHz
 
 int main(void) {
-    init_uart(10000000, 101000);
-    print_uart("Starting IVT sensor test...\n");
+    //  *(uint32_t*)DCO_CONFIG_BASE_ADDR = 22;        // FC
+    //  *(uint32_t*)(DCO_CONFIG_BASE_ADDR + 1) = 10;  // CC
+    //  *(uint32_t*)(DCO_CONFIG_BASE_ADDR + 3) = 0;   // DIV
 
-    uint32_t num_itr = 1;
+    init_uart(526000000, 144000); // Hz
+    //  print_uart("Starting IVT sensor test...\n");
+
+    init_power_switch();
+    init_sensor_weight();
+
+    uint32_t num_itr = 3;
     init_therm_top(
         1,        // therm_top_start
         1,        // therm_top_en
@@ -44,11 +56,10 @@ int main(void) {
     for (int i = 0; i < num_itr; i++) {
         store_sensor_data(
             i,
-            1,  // read_code
+            0,  // read_code
             1   // read_freq
         );
     }
-
-    print_uart("IVT sensor test finished!\n");
+    // print_uart("IVT sensor test finished!\n");
     return 0;
 }

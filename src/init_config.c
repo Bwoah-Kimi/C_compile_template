@@ -110,20 +110,50 @@ void init_sensor_weight(void) {
 }
 
 void init_power_switch(void) {
+    static const uint8_t power_switch_config[14] = {
+        0b00000000,  // Power switch 0
+        0b00000000,  // Power switch 1
+        0b00000000,  // Power switch 2
+        0b00000000,  // Power switch 3
+        0b00000000,  // Power switch 4
+        0b00000000,  // Power switch 5
+        0b00000000,  // Power switch 6
+        0b00000000,  // Power switch 7
+        0b00000000,  // Power switch 8
+        0b00000000,  // Power switch 9
+        0b00000000,  // Power switch 10
+        0b00000000,  // Power switch 11
+        0b00000000,  // Power switch 12
+        0b00000000   // Power switch 13
+    };
+    static const uint8_t power_switch_config_01[2] = {
+        0b11111111,  // Power switch 0
+        0b11111111,  // Power switch 1
+    };
+
     uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
     uint64_t reg0 = 0;
     for (int i = 0; i < 7; i++) {
-        reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
+        if (i % 2 == 1) {
+            reg0 |= ((uint64_t)power_switch_config_01[0] << (i * 8)); // Shift each switch config into the correct position
+        }
+        else {
+            reg0 |= ((uint64_t)power_switch_config_01[1] << (i * 8)); // Shift each switch config into the correct position
+        }
     }
     uint64_t reg1 = 0;
     for (int i = 0; i < 7; i++) {
-        reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
+        if (i % 2 == 1) {
+            reg1 |= ((uint64_t)power_switch_config_01[0] << (i * 8)); // Shift each switch config into the correct position
+        }
+        else {
+            reg1 |= ((uint64_t)power_switch_config_01[1] << (i * 8)); // Shift each switch config into the correct position
+        }
     }
     *(power_switch_base_addr + 0) = reg0;
     *(power_switch_base_addr + 1) = reg1;
     return;
 }
-
 void init_standardization_unit(void) {
     uint64_t* quant_config_regfile_base_addr = (uint64_t*)QUANT_CONFIG_REGFILE_BASE_ADDR;
     uint64_t* dequant_config_regfile_base_addr = (uint64_t*)DEQUANT_CONFIG_REGFILE_BASE_ADDR;

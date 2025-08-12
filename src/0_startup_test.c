@@ -728,9 +728,6 @@ void test_synthetic_task_scheduling(void) {
         0         // store_action_mode
     );
 
-    // Initialize NPU
-    init_npu();
-
     print_uart("=================================================\n");
     print_uart("Synthetic Task Scheduling Test FINISHED.\n");
     print_uart("=================================================\n");
@@ -739,7 +736,7 @@ void test_synthetic_task_scheduling(void) {
 
 
 int main(void) {
-    init_uart(10000000, 101000);
+    init_uart(115000000, 115200);
 
     // Test memory layout
     test_mem_layout();
