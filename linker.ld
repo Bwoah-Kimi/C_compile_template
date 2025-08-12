@@ -27,17 +27,4 @@ SECTIONS
         *(.bss.*)
         *(COMMON)
     }
-
-    . = 0x60002238;
-    .sensor_weight : {
-        *(.sensor_weight)
-        *(.sensor_weight.*)
-    }
-
-    . = 0x40d00000;
-    .power_switch_code : {
-        *(.power_switch_code)
-        *(.power_switch_code.*)
-    }
-
 }

@@ -100,29 +100,29 @@ void init_q_table(void) {
     }
 }
 
-// void init_sensor_weight(void) {
-//     int64_t* sensor_weight_buffer_base_addr = (int64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
-//     for (int i = 0; i < WEIGHT_I_NUM + WEIGHT_T_NUM + WEIGHT_V_NUM; i++) {
-//         // Write values to sensor weight buffer
-//         *(sensor_weight_buffer_base_addr + i) = sensor_weight[i];
-//     }
-//     return;
-// }
+void init_sensor_weight(void) {
+    int64_t* sensor_weight_buffer_base_addr = (int64_t*)SENSOR_WEIGHT_BUFFER_BASE_ADDR;
+    for (int i = 0; i < WEIGHT_I_NUM + WEIGHT_T_NUM + WEIGHT_V_NUM; i++) {
+        // Write values to sensor weight buffer
+        *(sensor_weight_buffer_base_addr + i) = sensor_weight[i];
+    }
+    return;
+}
 
-// void init_power_switch(void) {
-//     uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
-//     uint64_t reg0 = 0;
-//     for (int i = 0; i < 7; i++) {
-//         reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
-//     }
-//     uint64_t reg1 = 0;
-//     for (int i = 0; i < 7; i++) {
-//         reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
-//     }
-//     *(power_switch_base_addr + 0) = reg0;
-//     *(power_switch_base_addr + 1) = reg1;
-//     return;
-// }
+void init_power_switch(void) {
+    uint64_t* power_switch_base_addr = (uint64_t*)POWER_SWITCH_BASE_ADDR;
+    uint64_t reg0 = 0;
+    for (int i = 0; i < 7; i++) {
+        reg0 |= ((uint64_t)power_switch_config[i] << (i * 8)); // Shift each switch config into the correct position
+    }
+    uint64_t reg1 = 0;
+    for (int i = 0; i < 7; i++) {
+        reg1 |= ((uint64_t)power_switch_config[i + 7] << (i * 8)); // Shift each switch config into the correct position
+    }
+    *(power_switch_base_addr + 0) = reg0;
+    *(power_switch_base_addr + 1) = reg1;
+    return;
+}
 
 void init_standardization_unit(void) {
     uint64_t* quant_config_regfile_base_addr = (uint64_t*)QUANT_CONFIG_REGFILE_BASE_ADDR;
