@@ -10,16 +10,15 @@
 #include "store_data.h"
 #include "uart.h"
 
-void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq)
-{
+void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq) {
     // Wait for the CPU start flag
     while ((*(volatile uint64_t*)CPU_START_FLAG_ADDR) != CPU_STORE_SENSOR_START_FLAG) {}
 
     if (read_code) {
         // Read sensor data from therm top
-        print_uart("IVTOutputCount:");
-        print_uart_byte(itr);
-        print_uart(":\n");
+        // print_uart("IVTOutputCount:");
+        // print_uart_byte(itr);
+        // print_uart(":\n");
         uint64_t* sensor_data_base_addr = (uint64_t*)SENSOR_ENCODINGS_BASE_ADDR;
         for (int j = 0; j < 14; j++)
         {
@@ -31,19 +30,24 @@ void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq)
             uint16_t current_code = (uint16_t)((sensor_data >> 20) & 0xFFFF);  // [35:20]
             uint32_t power_code = (uint32_t)((sensor_data >> 36) & 0x3FFFFFF); // [61:36]
 
-            print_uart("sensor_addr");
-            print_uart_int((uint32_t)j);
-            print_uart(": T:");
-            print_uart_int((uint32_t)thermal_code);
-            print_uart(", V:");
-            print_uart_int((uint32_t)voltage_code);
-            print_uart(", I:");
-            print_uart_int((uint32_t)current_code);
-            print_uart(", P:");
-            print_uart_int(power_code);
-            print_uart("\n");
+            // print_uart("sensor_id ");
+            // print_uart_int((uint32_t)j);
+            // print_uart(": ");
+
+            // Format: T, V, I, P
+            if (j == 13) {
+                print_uart_int((uint32_t)thermal_code);
+                print_uart(",");
+                print_uart_int((uint32_t)voltage_code);
+                print_uart(",");
+                print_uart_int((uint32_t)current_code);
+                print_uart(",");
+                print_uart_int(power_code);
+                print_uart(",");
+            }
+
         }
-        print_uart("\n");
+        // print_uart("\n");
     }
 
     if (read_freq) {
@@ -59,23 +63,21 @@ void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq)
             uint16_t freq_0 = (uint16_t)(freq_data & 0x3FF);           // [9:0] - 10-bit
             uint16_t freq_1 = (uint16_t)((freq_data >> 10) & 0x7FF);   // [20:10] - 11-bit
             uint16_t freq_2 = (uint16_t)((freq_data >> 21) & 0x7FF);   // [31:21] - 11-bit
-            if (j == 9 || j == 8 || 1) {
-                // Compact format: F0,F1,F2|
-                // print_uart("sensor_addr");
-                // print_uart_int((uint32_t)j);
-                // print_uart(": F0:");
+
+            // print_uart("sensor_addr");
+            // print_uart_int((uint32_t)j);
+            // print_uart(": ");
+
+            if (j == 13) {
                 print_uart_int((uint32_t)freq_0);
                 print_uart(",");
-                // print_uart(", F1:");
                 print_uart_int((uint32_t)freq_1);
                 print_uart(",");
-                // print_uart(", F2:");
                 print_uart_int((uint32_t)freq_2);
-                print_uart(",");
-                print_uart("\n");
+                print_uart(",\n");
             }
         }
-        print_uart("\n");
+        // print_uart("\n");
     }
 
     // Set finish flag
@@ -84,8 +86,7 @@ void store_sensor_data(uint8_t itr, uint8_t read_code, uint8_t read_freq)
 }
 
 
-void store_pred_data(uint8_t itr)
-{
+void store_pred_data(uint8_t itr) {
     while ((*(volatile uint64_t*)CPU_START_FLAG_ADDR) != CPU_STORE_PRED_START_FLAG) {}
 
     // Read prediction data from therm top
@@ -108,8 +109,7 @@ void store_pred_data(uint8_t itr)
     *(volatile uint64_t*)CPU_FINISH_FLAG_ADDR = CPU_STORE_PRED_FINISH_FLAG; // Set finish flag
 }
 
-void store_rl_action(uint8_t itr)
-{
+void store_rl_action(uint8_t itr) {
     while ((*(volatile uint64_t*)CPU_START_FLAG_ADDR) != CPU_STORE_ACTION_START_FLAG) {}
 
     *(volatile uint64_t*)CPU_FINISH_FLAG_ADDR = CPU_STORE_ACTION_FINISH_FLAG; // Set finish flag

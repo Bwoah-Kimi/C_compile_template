@@ -1,0 +1,12 @@
+#ifndef D2PU_CONFIG_H
+#define D2PU_CONFIG_H
+
+#include <stdint.h>
+#define SC_CONFIG 0x40600000
+#define MODE_CONFIG 0x40f00000
+#define INSTR_BASE 0x41000000
+#define INSTR_CONFIG 0x42000000
+#define IN_SRAM_BASE 0x43000000
+#define OUT_SRAM_BASE 0x44000000
+
+#endif

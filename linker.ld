@@ -27,4 +27,34 @@ SECTIONS
         *(.bss.*)
         *(COMMON)
     }
+
+    . = 0x40000000;
+    .d2pu_config_cim_reg_data : {
+        *(.d2pu_config_cim_reg_data)
+        *(.d2pu_config_cim_reg_data.*)
+    }
+
+    . = 0x40200000;
+    .d2pu_cim_d_reg_data : {
+        *(.d2pu_cim_d_reg_data)
+        *(.d2pu_cim_d_reg_data.*)
+    }
+
+    . = 0x40400000;
+    .d2pu_cim_ifn_reg_data : {
+        *(.d2pu_cim_ifn_reg_data)
+        *(.d2pu_cim_ifn_reg_data.*)
+    }
+
+    . = 0x50000000;
+    .kvcompress_cim_weight_data : {
+        *(.kvcompress_cim_weight_data)
+        *(.kvcompress_cim_weight_data.*)
+    }
+
+    . = 0x50020000;
+    .kvcompress_cim_input_data : {
+        *(.kvcompress_cim_input_data)
+        *(.kvcompress_cim_input_data.*)
+    }
 }

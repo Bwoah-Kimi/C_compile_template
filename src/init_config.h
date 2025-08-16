@@ -52,9 +52,9 @@ void init_therm_top(
 
 void init_rl_scheduler(void);
 
-// void init_sensor_weight(void);
+void init_sensor_weight(void);
 
-// void init_power_switch(void);
+void init_power_switch(void);
 
 void init_standardization_unit(void);
 
