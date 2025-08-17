@@ -35,4 +35,4 @@ $(OUTPUT_ELF): $(SRC_FILES)
 # 	python3 $(UTILS_DIR)/post_process_hex.py
 
 clean:
-	rm -rf $(BUILD_DIR) $(BINARY_DIR) $(SCRIPTS_DIR)
+	rm -rf $(BUILD_DIR) $(BINARY_DIR)
