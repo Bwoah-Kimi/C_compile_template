@@ -338,12 +338,12 @@ int main() {
 
     // npu_all_pwr(true);
     // npu_func0_pwr(true);
-    // npu_func1_pwr(true);
-    // macro_select(2, true);
+    // npu_func1_pwr(false);
+    // macro_select(9, false);
 
-    uint32_t power_cycle = 2;
-    uint32_t num_itr = 100;
-    uint32_t sampling_intvl = 100000000;
+    uint32_t power_cycle = 0;
+    uint32_t num_itr = 400;
+    uint32_t sampling_intvl = 100000;
     uint8_t store_sensor_mode = 3; // 2'b00 Don't store; 2'b01 UART; 2'b10 Main memory; 2'b11 Both
     init_therm_top(
         1,                      // therm_top_start
@@ -385,9 +385,9 @@ int main() {
             }
         }
         else if (store_sensor_mode == 3) {
-            sync_npu(true, 0, false);
-            for (uint32_t i = 1; i < num_itr / power_cycle / 2; i++) {
-                sync_npu(false, 0, false);
+            sync_npu(true, 0, true);
+            for (uint32_t i = 1; i < 10; i++) {
+                sync_npu(false, 0, true);
             }
         }
 
@@ -404,15 +404,15 @@ int main() {
             }
         }
         else if (store_sensor_mode == 3) {
-            sync_npu(true, 0, true);
-            for (uint32_t i = 1; i < num_itr / power_cycle / 2; i++) {
-                sync_npu(false, 0, true);
+            sync_npu(true, 0, false);
+            for (uint32_t i = 1; i < 390; i++) {
+                sync_npu(false, 0, false);
             }
         }
     }
 
-    // macro_select(9, true);
-    npu_func1_pwr(true);
+    macro_select(9, true);
+    // npu_func1_pwr(true);
 
     return 0;
 }
