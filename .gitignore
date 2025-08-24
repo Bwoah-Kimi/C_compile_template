@@ -1,5 +1,6 @@
 .vscode/
 bin/
 build/
+results/
 .DS_Store
 
