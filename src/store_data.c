@@ -10,7 +10,7 @@
 #include "store_data.h"
 #include "uart.h"
 
-void conv_and_store_sensor_code_to_mem(int itr, uint32_t sensor_data_base_addr) {
+void conv_and_store_sensor_code_to_mem(uint32_t itr, uint32_t sensor_data_base_addr) {
     // Wait for the CPU start flag
     while ((*(volatile uint64_t*)CPU_START_FLAG_ADDR) != CPU_STORE_SENSOR_START_FLAG) {}
 
@@ -174,6 +174,7 @@ void process_sensor_data(uint32_t itr_count, uint32_t sensor_data_base_addr) {
     }
 
     // Read power switch codes
+    // TODO
     uint32_t ps_code[14];
     for (int k = 0; k < 14; k++) {
         ps_code[k] = *(volatile uint32_t*)(POWER_SWITCH_BASE_ADDR + k * sizeof(uint32_t));
@@ -234,7 +235,7 @@ void process_sensor_data(uint32_t itr_count, uint32_t sensor_data_base_addr) {
         uint16_t sensor_thermal_encodings = (T[k] >> 24) & 0x3FF;    // T[k][33:24] -> 10 bits
 
         // Calculate power (example: P = V * I, scaled appropriately)
-        uint32_t sensor_power_encodings = ((uint64_t)sensor_voltage_encodings * sensor_current_encodings) >> 4; // Scale down and take 26 bits
+        uint32_t sensor_power_encodings = (uint64_t)sensor_voltage_encodings * sensor_current_encodings; // Scale down and take 26 bits
         sensor_power_encodings &= 0x3FFFFFF; // Ensure 26 bits
 
         // Pack into 64-bit word

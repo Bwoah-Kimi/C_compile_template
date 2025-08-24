@@ -60,8 +60,6 @@ void init_standardization_unit(void);
 
 void init_q_table(void);
 
-void init_npu(void);
-
 uint64_t create_rl_config_regfile_0_data(
     uint16_t coef_k1,
     uint16_t coef_k2,

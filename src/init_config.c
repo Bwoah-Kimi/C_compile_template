@@ -110,22 +110,22 @@ void init_sensor_weight(void) {
 }
 
 void init_power_switch(void) {
-    static const uint8_t power_switch_config[14] = {
-        0b00000000,  // Power switch 0
-        0b00000000,  // Power switch 1
-        0b00000000,  // Power switch 2
-        0b00000000,  // Power switch 3
-        0b00000000,  // Power switch 4
-        0b00000000,  // Power switch 5
-        0b00000000,  // Power switch 6
-        0b00000000,  // Power switch 7
-        0b00000000,  // Power switch 8
-        0b00000000,  // Power switch 9
-        0b00000000,  // Power switch 10
-        0b00000000,  // Power switch 11
-        0b00000000,  // Power switch 12
-        0b00000000   // Power switch 13
-    };
+    // static const uint8_t power_switch_config[14] = {
+    //     0b00000000,  // Power switch 0
+    //     0b00000000,  // Power switch 1
+    //     0b00000000,  // Power switch 2
+    //     0b00000000,  // Power switch 3
+    //     0b00000000,  // Power switch 4
+    //     0b00000000,  // Power switch 5
+    //     0b00000000,  // Power switch 6
+    //     0b00000000,  // Power switch 7
+    //     0b00000000,  // Power switch 8
+    //     0b00000000,  // Power switch 9
+    //     0b00000000,  // Power switch 10
+    //     0b00000000,  // Power switch 11
+    //     0b00000000,  // Power switch 12
+    //     0b00000000   // Power switch 13
+    // };
     static const uint8_t power_switch_config_01[2] = {
         0b00000000,  // Power switch 0
         0b00000000,  // Power switch 1
@@ -174,10 +174,6 @@ void init_standardization_unit(void) {
         quant_config_regfile_base_addr[i] = quant_config[i];
         dequant_config_regfile_base_addr[i] = dequant_config[i];
     }
-}
-
-void init_npu(void) {
-    return;
 }
 
 uint64_t create_top_regfile_0_data(uint8_t therm_top_start, uint8_t therm_top_en, uint8_t therm_top_stop, uint8_t collect_en, uint8_t collect_mode, uint8_t pred_en, uint8_t pred_mode, uint8_t schedule_en, uint8_t store_sensor_mode, uint8_t action_offset, uint32_t num_itr, uint32_t sampling_intvl) {
